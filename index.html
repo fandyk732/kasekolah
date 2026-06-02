@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aplikasi Kasir TU - Realtime Cloud</title>
+    <title>Sistem Keuangan Tata Usaha</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
@@ -15,71 +15,163 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 font-sans min-h-screen">
+<body class="bg-slate-50 font-sans min-h-screen text-slate-800">
 
-    <div class="max-w-4xl mx-auto px-4 py-8">
-        <header class="bg-indigo-600 text-white p-6 rounded-2xl shadow-md mb-6 text-center no-print">
-            <h1 class="text-2xl font-bold tracking-wide">Sistem Kasir TU (Cloud Synchronized)</h1>
-            <p class="text-indigo-100 text-sm mt-1">Data tersimpan aman di Cloud, Real-time Sinkron Antar Device</p>
+    <div id="halamanLogin" class="flex min-h-screen items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="bg-indigo-100 text-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl shadow-inner">
+                    🏫
+                </div>
+                <h2 class="text-2xl font-bold text-slate-800">Login Tata Usaha</h2>
+                <p class="text-slate-400 text-sm mt-1">Silakan masuk untuk mengelola keuangan sekolah</p>
+            </div>
+            
+            <form onsubmit="prosesLogin(event)">
+                <div class="mb-4">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Username</label>
+                    <input type="text" id="username" required placeholder="Masukkan username" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Password</label>
+                    <input type="password" id="password" required placeholder="••••••••" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition duration-200 shadow-md shadow-indigo-100 cursor-pointer text-center">
+                    Masuk Aplikasi
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div id="halamanDashboard" class="hidden max-w-6xl mx-auto px-4 py-6 md:py-10">
+        <header class="flex flex-col sm:flex-row justify-between items-center bg-gradient-to-r from-indigo-600 to-violet-600 text-white p-6 rounded-3xl shadow-lg mb-6 gap-4 no-print">
+            <div class="text-center sm:text-left">
+                <h1 class="text-xl md:text-2xl font-bold tracking-wide">Sistem Keuangan Tata Usaha</h1>
+                <p class="text-indigo-100 text-xs md:text-sm mt-0.5">Real-time Cloud Database Synchronized</p>
+            </div>
+            <button onclick="prosesLogout()" class="bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-medium px-4 py-2 rounded-xl transition cursor-pointer">
+                🚪 Keluar (Eka)
+            </button>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 h-fit no-print">
-                <h2 class="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">Input Transaksi</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6 no-print">
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                <span class="text-xs text-slate-400 font-medium block">Total Pemasukan</span>
+                <span id="widgetPemasukan" class="text-base md:text-lg font-bold text-emerald-600">Rp 0</span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
+                <span class="text-xs text-slate-400 font-medium block">Total Pengeluaran</span>
+                <span id="widgetPengeluaran" class="text-base md:text-lg font-bold text-rose-600">Rp 0</span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs col-span-2 md:col-span-1">
+                <span class="text-xs text-slate-400 font-medium block">Saldo Kas Global</span>
+                <span id="widgetSaldo" class="text-base md:text-lg font-bold text-indigo-600">Rp 0</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 h-fit no-print">
+                <h2 class="text-base font-bold text-slate-700 mb-4 border-b border-slate-100 pb-2">Input Transaksi Baru</h2>
                 <form id="formTransaksi" onsubmit="tambahDataKeCloud(event)">
+                    
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-600 mb-1">Nama Pembayar</label>
-                        <input type="text" id="nama" required class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Arus Kas</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="border border-slate-200 rounded-xl p-3 flex items-center gap-2 cursor-pointer bg-slate-50 hover:bg-slate-100 transition has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
+                                <input type="radio" name="jenis_kas" value="Pemasukan" checked required class="text-emerald-600 focus:ring-emerald-500">
+                                <span class="text-sm font-medium text-slate-700">Pemasukan</span>
+                            </label>
+                            <label class="border border-slate-200 rounded-xl p-3 flex items-center gap-2 cursor-pointer bg-slate-50 hover:bg-slate-100 transition has-[:checked]:border-rose-500 has-[:checked]:bg-rose-50">
+                                <input type="radio" name="jenis_kas" value="Pengeluaran" class="text-rose-600 focus:ring-rose-500">
+                                <span class="text-sm font-medium text-slate-700">Pengeluaran</span>
+                            </label>
+                        </div>
                     </div>
+
                     <div class="mb-4">
-                        <label class="block text-sm font-medium text-gray-600 mb-1">Jumlah Uang (Rp)</label>
-                        <input type="number" id="jumlah" required min="1" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Tanggal Transaksi</label>
+                        <input type="date" id="tanggal" required class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
+
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Kategori / Jenis Pembayaran</label>
+                        <select id="kategori" required class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                            <option value="" disabled selected>Pilih Kategori...</option>
+                            <optgroup label="Pemasukan">
+                                <option value="SPP">SPP</option>
+                                <option value="Uang PPDB">Uang PPDB</option>
+                                <option value="Buku">Buku</option>
+                                <option value="Seragam">Seragam</option>
+                                <option value="Kegiatan Siswa">Kegiatan Siswa</option>
+                                <option value="Dana BOS">Dana BOS</option>
+                            </optgroup>
+                            <optgroup label="Pengeluaran">
+                                <option value="Gaji/Honor">Gaji / Honor</option>
+                                <option value="ATK/Operasional">ATK / Operasional</option>
+                                <option value="Perbaikan/Pemeliharaan">Perbaikan / Pemeliharaan</option>
+                            </optgroup>
+                            <optgroup label="Lainnya">
+                                <option value="Lain-lain">Lain-lain</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nama / Pihak Terkait</label>
+                        <input type="text" id="nama" required placeholder="Contoh: Ahmad (Siswa) / Toko Jaya" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nominal (Rp)</label>
+                        <input type="number" id="jumlah" required min="1" placeholder="Masukkan angka saja" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                    </div>
+
                     <div class="mb-5">
-                        <label class="block text-sm font-medium text-gray-600 mb-1">Keperluan</label>
-                        <textarea id="keperluan" required rows="3" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Keterangan</label>
+                        <textarea id="keterangan" required rows="2" placeholder="Tulis rincian atau catatan tambahan..." class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm"></textarea>
                     </div>
-                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-xl transition duration-200 shadow-sm cursor-pointer">
-                        Kirim ke Cloud
+
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition duration-200 shadow-sm cursor-pointer text-sm">
+                        🚀 Kirim ke Cloud Database
                     </button>
                 </form>
             </div>
 
-            <div class="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col justify-between">
+            <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex flex-col justify-between">
                 <div id="areaCetak">
-                    <h2 class="text-lg font-semibold text-gray-700 mb-4 border-b pb-2 flex justify-between items-center">
-                        <span>Data Transaksi Terkini</span>
-                        <span id="badgeTotal" class="text-sm bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full font-bold">Total: Rp 0</span>
+                    <h2 class="text-base font-bold text-slate-700 mb-4 border-b border-slate-100 pb-2 flex justify-between items-center">
+                        <span>Riwayat Transaksi Terkini</span>
                     </h2>
                     
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
+                        <table class="w-full text-left border-collapse min-w-[600px]">
                             <thead>
-                                <tr class="bg-gray-50 text-gray-500 text-sm border-b">
-                                    <th class="p-3 font-medium w-12 text-center">No</th>
-                                    <th class="p-3 font-medium">Nama Pembayar</th>
-                                    <th class="p-3 font-medium">Jumlah</th>
-                                    <th class="p-3 font-medium">Keperluan</th>
+                                <tr class="bg-slate-50 text-slate-400 text-xs font-semibold border-b border-slate-100 uppercase tracking-wider">
+                                    <th class="p-3 w-12 text-center">No</th>
+                                    <th class="p-3 w-28">Tanggal</th>
+                                    <th class="p-3 w-28">Kategori</th>
+                                    <th class="p-3">Nama / Rincian</th>
+                                    <th class="p-3 text-right w-36">Nominal</th>
                                 </tr>
                             </thead>
-                            <tbody id="tabelBody" class="text-gray-700 text-sm divide-y divide-gray-100">
+                            <tbody id="tabelBody" class="text-slate-700 text-xs md:text-sm divide-y divide-slate-100">
                                 <tr>
-                                    <td colspan="4" class="p-8 text-center text-gray-400 italic">Menghubungkan ke database cloud...</td>
+                                    <td colspan="5" class="p-8 text-center text-slate-400 italic">Menghubungkan ke database cloud...</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <div class="flex gap-2 mt-6 pt-4 border-t border-gray-100 no-print">
-                    <button onclick="eksporExcel()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 px-3 rounded-xl transition duration-200 shadow-sm text-sm flex items-center justify-center gap-1 cursor-pointer">
-                        📊 Excel
+                <div class="flex flex-wrap sm:flex-nowrap gap-2 mt-6 pt-4 border-t border-slate-100 no-print">
+                    <button onclick="eksporExcel()" class="w-full sm:flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 px-3 rounded-xl transition duration-200 shadow-2xs text-xs flex items-center justify-center gap-1.5 cursor-pointer">
+                        📊 Export Excel
                     </button>
-                    <button onclick="cetakLaporan()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-medium py-2.5 px-3 rounded-xl transition duration-200 shadow-sm text-sm flex items-center justify-center gap-1 cursor-pointer">
-                        🖨️ Print
+                    <button onclick="cetakLaporan()" class="w-full sm:flex-1 bg-amber-500 hover:bg-amber-600 text-white font-medium py-2.5 px-3 rounded-xl transition duration-200 shadow-2xs text-xs flex items-center justify-center gap-1.5 cursor-pointer">
+                        🖨️ Print Laporan
                     </button>
-                    <button onclick="hapusSemuaData()" class="bg-rose-600 hover:bg-rose-700 text-white font-medium py-2.5 px-3 rounded-xl transition duration-200 shadow-sm text-sm flex items-center justify-center gap-1 cursor-pointer" title="Kosongkan Database">
-                        🗑️ Reset Data
+                    <button onclick="hapusSemuaData()" class="w-auto bg-rose-50 hover:bg-rose-100 text-rose-600 font-medium py-2.5 px-3 rounded-xl transition duration-200 text-xs flex items-center justify-center gap-1.5 cursor-pointer" title="Kosongkan Database">
+                        🗑️ Reset Cloud
                     </button>
                 </div>
             </div>
@@ -90,7 +182,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // ⚠️ GANTI DENGAN KONFIGURASI FIREBASE MILIKMU SENDIRI
+        // ⚠️ PASTE KONFIGURASI FIREBASE KAMU DI SINI
         const firebaseConfig = {
   apiKey: "AIzaSyCtCpZxykL49qMZ4oqTyCbCC1X9qj6J58I",
   authDomain: "kasir-tu.firebaseapp.com",
@@ -101,81 +193,117 @@
   measurementId: "G-0P2PBSQ7E6"
 };
 
-        // Inisialisasi Firebase & Firestore
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const koleksiTransaksi = collection(db, "transaksi_tu");
 
-        // Array lokal untuk backup data saat export Excel
         window.dataKeuanganLokal = [];
 
-        // 1. FUNGSI SIMPAN DATA KE CLOUD
+        // Set default input tanggal ke tanggal hari ini saat login berhasil
+        document.getElementById('tanggal').valueAsDate = new Date();
+
+        // 1. FUNGSI SIMPAN DATA KE FIREBASE CLOUD
         window.tambahDataKeCloud = async function(event) {
             event.preventDefault();
             
+            const jenisKas = document.querySelector('input[name="jenis_kas"]:checked').value;
+            const tanggal = document.getElementById('tanggal').value;
+            const kategori = document.getElementById('kategori').value;
             const nama = document.getElementById('nama').value;
             const jumlah = parseFloat(document.getElementById('jumlah').value);
-            const keperluan = document.getElementById('keperluan').value;
+            const keterangan = document.getElementById('keterangan').value;
 
             try {
-                // Simpan langsung ke dokumen Firestore dengan timestamp agar urut
                 await addDoc(koleksiTransaksi, {
+                    jenisKas: jenisKas,
+                    tanggal: tanggal,
+                    kategori: kategori,
                     nama: nama,
                     jumlah: jumlah,
-                    keperluan: keperluan,
-                    waktu: new Date().getTime()
+                    keterangan: keterangan,
+                    waktuInput: new Date().getTime()
                 });
-                document.getElementById('formTransaksi').reset();
+                
+                // Reset form kecuali tanggal
+                document.getElementById('nama').value = '';
+                document.getElementById('jumlah').value = '';
+                document.getElementById('keterangan').value = '';
+                document.getElementById('kategori').selectedIndex = 0;
             } catch (error) {
                 alert("Gagal menyimpan ke cloud: " + error.message);
             }
         }
 
-        // 2. FUNGSI REAL-TIME LISTENER (Sinkron otomatis antar device)
-        // Fungsi ini berjalan otomatis di background mendengarkan perubahan data di cloud
-        const q = query(koleksiTransaksi, orderBy("waktu", "asc"));
+        // 2. FUNGSI REAL-TIME LISTENER SINKRONISASI DATA
+        const q = query(koleksiTransaksi, orderBy("tanggal", "desc"), orderBy("waktuInput", "desc"));
         onSnapshot(q, (snapshot) => {
             const tbody = document.getElementById('tabelBody');
-            const badgeTotal = document.getElementById('badgeTotal');
             
-            window.dataKeuanganLokal = []; // Reset backup lokal
+            window.dataKeuanganLokal = []; 
             let html = '';
-            let totalUang = 0;
             let index = 1;
+            
+            let totalPemasukan = 0;
+            let totalPengeluaran = 0;
 
             snapshot.forEach((doc) => {
                 const data = doc.data();
-                totalUang += data.jumlah;
+                
+                if (data.jenisKas === "Pemasukan") {
+                    totalPemasukan += data.jumlah;
+                } else {
+                    totalPengeluaran += data.jumlah;
+                }
 
-                // Simpan ke array lokal untuk keperluan export Excel
+                // Backup untuk Excel dengan struktur rapi
                 window.dataKeuanganLokal.push({
-                    "Nama Pembayar": data.nama,
-                    "Jumlah Uang": data.jumlah,
-                    "Keperluan": data.keperluan
+                    "No": index,
+                    "Tanggal": data.tanggal,
+                    "Arus Kas": data.jenisKas,
+                    "Kategori": data.kategori,
+                    "Nama / Pihak Terkait": data.nama,
+                    "Nominal (Rp)": data.jumlah,
+                    "Keterangan": data.keterangan
                 });
 
+                // Format Tampilan Tabel
+                const warnaNominal = data.jenisKas === "Pemasukan" ? "text-emerald-600 font-bold" : "text-rose-600 font-bold";
+                const tandaKas = data.jenisKas === "Pemasukan" ? "+" : "-";
+
                 html += `
-                    <tr class="hover:bg-gray-50 transition">
-                        <td class="p-3 text-center text-gray-400 font-medium">${index++}</td>
-                        <td class="p-3 font-semibold text-gray-800">${data.nama}</td>
-                        <td class="p-3 text-emerald-600 font-bold">Rp ${data.jumlah.toLocaleString('id-ID')}</td>
-                        <td class="p-3 text-gray-500">${data.keperluan}</td>
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="p-3 text-center text-slate-400 font-medium">${index++}</td>
+                        <td class="p-3 text-slate-500 font-medium whitespace-nowrap">${data.tanggal}</td>
+                        <td class="p-3 whitespace-nowrap"><span class="px-2 py-0.5 rounded-md text-xs font-medium ${data.jenisKas === 'Pemasukan' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">${data.kategori}</span></td>
+                        <td class="p-3">
+                            <div class="font-semibold text-slate-800">${data.nama}</div>
+                            <div class="text-xs text-slate-400 mt-0.5">${data.keterangan}</div>
+                        </td>
+                        <td class="p-3 text-right ${warnaNominal} whitespace-nowrap">
+                            ${tandaKas} Rp ${data.jumlah.toLocaleString('id-ID')}
+                        </td>
                     </tr>
                 `;
             });
 
+            // Update Widgets Saldo Atas
+            document.getElementById('widgetPemasukan').innerText = `Rp ${totalPemasukan.toLocaleString('id-ID')}`;
+            document.getElementById('widgetPengeluaran').innerText = `Rp ${totalPengeluaran.toLocaleString('id-ID')}`;
+            const saldoGlobal = totalPemasukan - totalPengeluaran;
+            const elSaldo = document.getElementById('widgetSaldo');
+            elSaldo.innerText = `Rp ${saldoGlobal.toLocaleString('id-ID')}`;
+            elSaldo.className = saldoGlobal >= 0 ? "text-base md:text-lg font-bold text-indigo-600" : "text-base md:text-lg font-bold text-rose-600";
+
             if (window.dataKeuanganLokal.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-400 italic">Belum ada data di cloud. Silakan input transaksi.</td></tr>`;
-                badgeTotal.innerText = "Total: Rp 0";
+                tbody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-slate-400 italic">Belum ada riwayat transaksi di cloud.</td></tr>`;
             } else {
                 tbody.innerHTML = html;
-                badgeTotal.innerText = `Total: Rp ${totalUang.toLocaleString('id-ID')}`;
             }
         });
 
-        // 3. FUNGSI RESET / HAPUS DATA KASIR (Bersihkan Cloud)
+        // 3. FUNGSI CLEAN DATABASE
         window.hapusSemuaData = async function() {
-            if (confirm("Apakah Anda yakin ingin menghapus SEMUA data dari cloud? (Pastikan sudah di-export ke Excel!)")) {
+            if (confirm("Apakah Anda yakin ingin menghapus SEMUA data di cloud? Pastikan sudah di-export ke Excel!")) {
                 const querySnapshot = await getDocs(koleksiTransaksi);
                 querySnapshot.forEach(async (dokumen) => {
                     await deleteDoc(doc(db, "transaksi_tu", dokumen.id));
@@ -185,22 +313,40 @@
     </script>
 
     <script>
-        // Fungsi Eksport Excel (Mengambil dari data backup lokal hasil sinkronisasi cloud)
+        function prosesLogin(event) {
+            event.preventDefault();
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+
+            if (user === "eka" && pass === "tatausaha123") {
+                document.getElementById('halamanLogin').classList.add('hidden');
+                document.getElementById('halamanDashboard').classList.remove('hidden');
+            } else {
+                alert("Username atau Password salah, bro!");
+            }
+        }
+
+        function prosesLogout() {
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('halamanDashboard').classList.add('hidden');
+            document.getElementById('halamanLogin').classList.remove('hidden');
+        }
+
         function eksporExcel() {
             if (!window.dataKeuanganLokal || window.dataKeuanganLokal.length === 0) {
-                alert("Belum ada data untuk diekspor!");
+                alert("Belum ada data transaksi untuk diekspor!");
                 return;
             }
             const worksheet = XLSX.utils.json_to_sheet(window.dataKeuanganLokal);
             const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan TU Cloud");
-            XLSX.writeFile(workbook, "Laporan_Tata_Usaha_Cloud.xlsx");
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan Keuangan TU");
+            XLSX.writeFile(workbook, "Laporan_Keuangan_TU.xlsx");
         }
 
-        // Fungsi Cetak
         function cetakLaporan() {
             if (!window.dataKeuanganLokal || window.dataKeuanganLokal.length === 0) {
-                alert("Belum ada data untuk dicetak!");
+                alert("Belum ada data transaksi untuk dicetak!");
                 return;
             }
             window.print();
