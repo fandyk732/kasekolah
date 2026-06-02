@@ -1,0 +1,338 @@
+
+<h2 class="sr-only">Aplikasi Penerimaan Uang Tata Usaha SMK — input transaksi, simpan data, export Excel, dan print laporan</h2>
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+
+.app { padding: 1rem 0; }
+
+.header { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+.header-icon { width: 40px; height: 40px; background: var(--color-background-info); border-radius: var(--border-radius-md); display: flex; align-items: center; justify-content: center; }
+.header-icon i { font-size: 20px; color: var(--color-text-info); }
+.header h1 { font-size: 18px; font-weight: 500; color: var(--color-text-primary); }
+.header p { font-size: 13px; color: var(--color-text-secondary); margin-top: 2px; }
+
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.stat-card { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 12px 14px; }
+.stat-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.stat-val { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+.stat-val.green { color: var(--color-text-success); }
+.stat-val.amber { color: var(--color-text-warning); }
+
+.form-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 1.5rem; }
+.form-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-group.full { grid-column: 1 / -1; }
+label { font-size: 12px; color: var(--color-text-secondary); }
+input, select, textarea { font-size: 14px; width: 100%; }
+textarea { resize: vertical; min-height: 60px; font-family: var(--font-sans); }
+
+.btn-row { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; padding: 7px 14px; border-radius: var(--border-radius-md); cursor: pointer; font-family: var(--font-sans); border: 0.5px solid var(--color-border-secondary); background: transparent; color: var(--color-text-primary); transition: background 0.15s; }
+.btn:hover { background: var(--color-background-secondary); }
+.btn:active { transform: scale(0.98); }
+.btn.primary { background: var(--color-background-info); border-color: var(--color-border-info); color: var(--color-text-info); }
+.btn.primary:hover { opacity: 0.85; }
+.btn.danger { background: var(--color-background-danger); border-color: var(--color-border-danger); color: var(--color-text-danger); }
+.btn i { font-size: 15px; }
+
+.table-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); overflow: hidden; margin-bottom: 1.5rem; }
+.table-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.table-header span { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+.table-actions { display: flex; gap: 6px; }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
+th { background: var(--color-background-secondary); color: var(--color-text-secondary); font-weight: 500; padding: 8px 12px; text-align: left; border-bottom: 0.5px solid var(--color-border-tertiary); font-size: 12px; }
+td { padding: 9px 12px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); word-break: break-word; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--color-background-secondary); }
+
+.badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+.badge.masuk { background: var(--color-background-success); color: var(--color-text-success); }
+.badge.keluar { background: var(--color-background-danger); color: var(--color-text-danger); }
+
+.empty-state { padding: 2rem; text-align: center; color: var(--color-text-secondary); font-size: 13px; }
+.empty-state i { font-size: 32px; display: block; margin-bottom: 8px; }
+
+.toast { position: fixed; bottom: 20px; right: 20px; background: var(--color-background-success); border: 0.5px solid var(--color-border-success); color: var(--color-text-success); padding: 10px 16px; border-radius: var(--border-radius-md); font-size: 13px; display: flex; align-items: center; gap: 6px; opacity: 0; transform: translateY(10px); transition: all 0.25s; z-index: 99; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateY(0); }
+
+@media (max-width: 480px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .form-group.full { grid-column: 1; }
+}
+</style>
+
+<div class="app">
+  <div class="header">
+    <div class="header-icon"><i class="ti ti-building-bank" aria-hidden="true"></i></div>
+    <div>
+      <h1>Kas Tata Usaha</h1>
+      <p>Pencatatan penerimaan & pengeluaran uang</p>
+    </div>
+  </div>
+
+  <div class="summary-grid">
+    <div class="stat-card">
+      <div class="stat-label">Total Pemasukan</div>
+      <div class="stat-val green" id="s-masuk">Rp 0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Pengeluaran</div>
+      <div class="stat-val amber" id="s-keluar">Rp 0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Saldo Kas</div>
+      <div class="stat-val" id="s-saldo">Rp 0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Jumlah Transaksi</div>
+      <div class="stat-val" id="s-count">0</div>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <div class="form-title"><i class="ti ti-plus-circle" aria-hidden="true"></i> Input Transaksi</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label for="tgl">Tanggal</label>
+        <input type="date" id="tgl">
+      </div>
+      <div class="form-group">
+        <label for="jenis">Jenis</label>
+        <select id="jenis">
+          <option value="Pemasukan">Pemasukan</option>
+          <option value="Pengeluaran">Pengeluaran</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="kategori">Kategori</label>
+        <select id="kategori">
+          <option>SPP</option>
+          <option>Uang Gedung</option>
+          <option>Seragam</option>
+          <option>LKS / Buku</option>
+          <option>Kegiatan Siswa</option>
+          <option>Dana BOS</option>
+          <option>Gaji / Honor</option>
+          <option>ATK / Operasional</option>
+          <option>Perbaikan & Pemeliharaan</option>
+          <option>Lain-lain</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="jumlah">Jumlah (Rp)</label>
+        <input type="number" id="jumlah" placeholder="Contoh: 500000" min="0">
+      </div>
+      <div class="form-group full">
+        <label for="nama-pembayar">Nama Pembayar / Penerima</label>
+        <input type="text" id="nama-pembayar" placeholder="Nama siswa, vendor, atau instansi">
+      </div>
+      <div class="form-group full">
+        <label for="keterangan">Keterangan</label>
+        <textarea id="keterangan" placeholder="Catatan tambahan (opsional)"></textarea>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" onclick="tambahTransaksi()"><i class="ti ti-device-floppy"></i> Simpan Transaksi</button>
+      <button class="btn" onclick="resetForm()"><i class="ti ti-refresh"></i> Reset</button>
+    </div>
+  </div>
+
+  <div class="table-card">
+    <div class="table-header">
+      <span><i class="ti ti-list" style="font-size:15px; vertical-align:-2px; margin-right:5px" aria-hidden="true"></i>Daftar Transaksi</span>
+      <div class="table-actions">
+        <button class="btn" onclick="exportExcel()"><i class="ti ti-table-export"></i> Export Excel</button>
+        <button class="btn" onclick="printLaporan()"><i class="ti ti-printer"></i> Print</button>
+        <button class="btn danger" onclick="hapusSemua()"><i class="ti ti-trash"></i> Hapus Semua</button>
+      </div>
+    </div>
+    <div id="table-container">
+      <div class="empty-state"><i class="ti ti-inbox" aria-hidden="true"></i>Belum ada transaksi. Silakan tambahkan data di atas.</div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+let transaksi = JSON.parse(localStorage.getItem('kas_tu') || '[]');
+
+const fmt = n => 'Rp ' + Math.round(n).toLocaleString('id-ID');
+
+function today() {
+  return new Date().toISOString().split('T')[0];
+}
+
+document.getElementById('tgl').value = today();
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.innerHTML = `<i class="ti ti-${type === 'error' ? 'alert-circle' : 'check'}" aria-hidden="true"></i> ${msg}`;
+  t.style.background = type === 'error' ? 'var(--color-background-danger)' : 'var(--color-background-success)';
+  t.style.color = type === 'error' ? 'var(--color-text-danger)' : 'var(--color-text-success)';
+  t.style.borderColor = type === 'error' ? 'var(--color-border-danger)' : 'var(--color-border-success)';
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function tambahTransaksi() {
+  const tgl = document.getElementById('tgl').value;
+  const jenis = document.getElementById('jenis').value;
+  const kategori = document.getElementById('kategori').value;
+  const jumlah = parseFloat(document.getElementById('jumlah').value);
+  const nama = document.getElementById('nama-pembayar').value.trim();
+  const ket = document.getElementById('keterangan').value.trim();
+
+  if (!tgl || !jumlah || jumlah <= 0 || !nama) {
+    showToast('Lengkapi tanggal, nama, dan jumlah!', 'error');
+    return;
+  }
+
+  const data = {
+    id: Date.now(),
+    tgl, jenis, kategori, jumlah, nama,
+    keterangan: ket || '-'
+  };
+
+  transaksi.unshift(data);
+  simpan();
+  renderTable();
+  updateSummary();
+  resetForm();
+  showToast('Transaksi berhasil disimpan!');
+}
+
+function hapus(id) {
+  if (!confirm('Hapus transaksi ini?')) return;
+  transaksi = transaksi.filter(t => t.id !== id);
+  simpan();
+  renderTable();
+  updateSummary();
+  showToast('Transaksi dihapus.');
+}
+
+function hapusSemua() {
+  if (!transaksi.length) return showToast('Tidak ada data.', 'error');
+  if (!confirm('Hapus SEMUA transaksi? Tindakan ini tidak dapat dibatalkan.')) return;
+  transaksi = [];
+  simpan();
+  renderTable();
+  updateSummary();
+  showToast('Semua data dihapus.');
+}
+
+function simpan() {
+  localStorage.setItem('kas_tu', JSON.stringify(transaksi));
+}
+
+function resetForm() {
+  document.getElementById('tgl').value = today();
+  document.getElementById('jumlah').value = '';
+  document.getElementById('nama-pembayar').value = '';
+  document.getElementById('keterangan').value = '';
+}
+
+function updateSummary() {
+  const masuk = transaksi.filter(t => t.jenis === 'Pemasukan').reduce((s, t) => s + t.jumlah, 0);
+  const keluar = transaksi.filter(t => t.jenis === 'Pengeluaran').reduce((s, t) => s + t.jumlah, 0);
+  document.getElementById('s-masuk').textContent = fmt(masuk);
+  document.getElementById('s-keluar').textContent = fmt(keluar);
+  const saldo = masuk - keluar;
+  const sel = document.getElementById('s-saldo');
+  sel.textContent = fmt(saldo);
+  sel.style.color = saldo >= 0 ? 'var(--color-text-success)' : 'var(--color-text-danger)';
+  document.getElementById('s-count').textContent = transaksi.length;
+}
+
+function renderTable() {
+  const c = document.getElementById('table-container');
+  if (!transaksi.length) {
+    c.innerHTML = '<div class="empty-state"><i class="ti ti-inbox" aria-hidden="true"></i>Belum ada transaksi. Silakan tambahkan data di atas.</div>';
+    return;
+  }
+  const rows = transaksi.map((t, i) => `
+    <tr>
+      <td style="width:36px; color: var(--color-text-secondary); font-size:11px;">${transaksi.length - i}</td>
+      <td style="width:96px;">${t.tgl}</td>
+      <td style="width:90px;"><span class="badge ${t.jenis === 'Pemasukan' ? 'masuk' : 'keluar'}">${t.jenis}</span></td>
+      <td style="width:110px;">${t.kategori}</td>
+      <td>${t.nama}</td>
+      <td style="width:110px; font-weight:500;">${fmt(t.jumlah)}</td>
+      <td style="width:100px; color: var(--color-text-secondary); font-size:12px;">${t.keterangan}</td>
+      <td style="width:40px; text-align:center;"><button class="btn" style="padding:4px 6px; font-size:12px;" onclick="hapus(${t.id})" title="Hapus"><i class="ti ti-trash" aria-hidden="true"></i></button></td>
+    </tr>`).join('');
+  c.innerHTML = `<table>
+    <thead><tr>
+      <th style="width:36px">#</th>
+      <th style="width:96px">Tanggal</th>
+      <th style="width:90px">Jenis</th>
+      <th style="width:110px">Kategori</th>
+      <th>Nama</th>
+      <th style="width:110px">Jumlah</th>
+      <th style="width:100px">Keterangan</th>
+      <th style="width:40px"></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+function exportExcel() {
+  if (!transaksi.length) return showToast('Tidak ada data untuk diekspor.', 'error');
+  const masuk = transaksi.filter(t => t.jenis === 'Pemasukan').reduce((s, t) => s + t.jumlah, 0);
+  const keluar = transaksi.filter(t => t.jenis === 'Pengeluaran').reduce((s, t) => s + t.jumlah, 0);
+
+  const header = [['LAPORAN BUKU KAS TATA USAHA'], ['SMK AL KAAFFAH'], [''], ['Tanggal Cetak:', new Date().toLocaleDateString('id-ID', {day:'numeric',month:'long',year:'numeric'})], ['']];
+  const cols = [['No', 'Tanggal', 'Jenis', 'Kategori', 'Nama Pembayar / Penerima', 'Jumlah (Rp)', 'Keterangan']];
+  const rows = transaksi.map((t, i) => [
+    transaksi.length - i, t.tgl, t.jenis, t.kategori, t.nama, t.jumlah, t.keterangan
+  ]);
+  const footer = [[''], ['Total Pemasukan', '', '', '', '', masuk, ''], ['Total Pengeluaran', '', '', '', '', keluar, ''], ['Saldo Kas', '', '', '', '', masuk - keluar, '']];
+
+  const ws_data = [...header, ...cols, ...rows, ...footer];
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(ws_data);
+  ws['!cols'] = [{wch:4},{wch:12},{wch:13},{wch:18},{wch:28},{wch:18},{wch:22}];
+  XLSX.utils.book_append_sheet(wb, ws, 'Buku Kas');
+  XLSX.writeFile(wb, `LaporanKas_${new Date().toISOString().split('T')[0]}.xlsx`);
+  showToast('File Excel berhasil diunduh!');
+}
+
+function printLaporan() {
+  if (!transaksi.length) return showToast('Tidak ada data untuk diprint.', 'error');
+  const masuk = transaksi.filter(t => t.jenis === 'Pemasukan').reduce((s, t) => s + t.jumlah, 0);
+  const keluar = transaksi.filter(t => t.jenis === 'Pengeluaran').reduce((s, t) => s + t.jumlah, 0);
+  const rows = transaksi.map((t, i) => `<tr><td>${transaksi.length - i}</td><td>${t.tgl}</td><td>${t.jenis}</td><td>${t.kategori}</td><td>${t.nama}</td><td style="text-align:right">Rp ${t.jumlah.toLocaleString('id-ID')}</td><td>${t.keterangan}</td></tr>`).join('');
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Laporan Kas</title><style>
+    body{font-family:Arial,sans-serif;font-size:12px;margin:24px}
+    h2,h3{margin:0;text-align:center}
+    p{text-align:center;margin:2px 0}
+    table{width:100%;border-collapse:collapse;margin-top:16px}
+    th,td{border:1px solid #aaa;padding:5px 8px;font-size:11px}
+    th{background:#eee;font-weight:600}
+    .footer{margin-top:12px;text-align:right;font-weight:600}
+    @media print{.no-print{display:none}}
+  </style></head><body>
+    <h2>LAPORAN BUKU KAS TATA USAHA</h2>
+    <h3>SMK AL KAAFFAH</h3>
+    <p>Tanggal Cetak: ${new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}</p>
+    <table><thead><tr><th>#</th><th>Tanggal</th><th>Jenis</th><th>Kategori</th><th>Nama</th><th>Jumlah (Rp)</th><th>Keterangan</th></tr></thead>
+    <tbody>${rows}</tbody></table>
+    <div class="footer">
+      Total Pemasukan: Rp ${masuk.toLocaleString('id-ID')}<br>
+      Total Pengeluaran: Rp ${keluar.toLocaleString('id-ID')}<br>
+      Saldo Kas: Rp ${(masuk-keluar).toLocaleString('id-ID')}
+    </div>
+    <br><script>window.print();window.close();<\/script>
+  </body></html>`);
+  w.document.close();
+}
+
+renderTable();
+updateSummary();
+</script>
