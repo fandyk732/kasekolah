@@ -1,338 +1,170 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Kasir Tata Usaha</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        /* Style khusus untuk cetak halaman struk/laporan */
+        @media print {
+            body * { visibility: hidden; }
+            #areaCetak, #areaCetak * { visibility: visible; }
+            #areaCetak { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen">
 
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font-sans);color:var(--color-text-primary)}
-.app{padding:1.5rem 0;max-width:720px;margin:auto}
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:0.5px solid var(--color-border-tertiary)}
-.header h1{font-size:20px;font-weight:500;display:flex;align-items:center;gap:8px}
-.sync-badge{font-size:12px;padding:3px 10px;border-radius:20px;display:flex;align-items:center;gap:5px;border:0.5px solid}
-.sync-ok{background:#EAF3DE;color:#3B6D11;border-color:#C0DD97}
-.sync-err{background:#FCEBEB;color:#A32D2D;border-color:#F7C1C1}
-.sync-loading{background:#E6F1FB;color:#185FA5;border-color:#B5D4F4}
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.5rem}
-.stat{background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:14px 16px}
-.stat label{font-size:12px;color:var(--color-text-secondary);display:block;margin-bottom:4px}
-.stat .val{font-size:20px;font-weight:500}
-.stat .val.green{color:#3B6D11}
-.form-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:1.25rem;margin-bottom:1.5rem}
-.form-card h2{font-size:15px;font-weight:500;margin-bottom:1rem;color:var(--color-text-secondary)}
-.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
-.form-group{display:flex;flex-direction:column;gap:5px}
-.form-group label{font-size:13px;color:var(--color-text-secondary)}
-.form-group input,.form-group select,.form-group textarea{border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);padding:8px 10px;font-size:14px;font-family:var(--font-sans);color:var(--color-text-primary);background:var(--color-background-primary);width:100%}
-.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:#378ADD;box-shadow:0 0 0 2px #B5D4F4}
-.form-group textarea{resize:vertical;min-height:60px}
-.btn-row{display:flex;gap:8px;flex-wrap:wrap}
-.btn{padding:8px 16px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);font-size:13px;font-family:var(--font-sans);cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:var(--color-background-primary);color:var(--color-text-primary);transition:background 0.15s}
-.btn:hover{background:var(--color-background-secondary)}
-.btn:active{transform:scale(0.98)}
-.btn.primary{background:#185FA5;color:#fff;border-color:#185FA5}
-.btn.primary:hover{background:#0C447C}
-.btn.danger{background:#A32D2D;color:#fff;border-color:#A32D2D}
-.btn.danger:hover{background:#791F1F}
-.table-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;margin-bottom:1.5rem}
-.table-card h2{font-size:15px;font-weight:500;padding:1rem 1.25rem;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-secondary);display:flex;align-items:center;justify-content:space-between}
-table{width:100%;border-collapse:collapse;font-size:13px}
-th{padding:8px 14px;text-align:left;color:var(--color-text-secondary);font-weight:500;font-size:12px;background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary)}
-td{padding:9px 14px;border-bottom:0.5px solid var(--color-border-tertiary);color:var(--color-text-primary)}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:var(--color-background-secondary)}
-.badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500}
-.badge-green{background:#EAF3DE;color:#3B6D11}
-.badge-blue{background:#E6F1FB;color:#185FA5}
-.badge-amber{background:#FAEEDA;color:#854F0B}
-.empty{padding:2.5rem;text-align:center;color:var(--color-text-secondary);font-size:14px}
-.filter-row{display:flex;gap:8px;align-items:center;padding:10px 1.25rem;border-bottom:0.5px solid var(--color-border-tertiary)}
-.filter-row input,.filter-row select{font-size:13px;padding:6px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);font-family:var(--font-sans)}
-.del-btn{padding:4px 8px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:none;cursor:pointer;color:var(--color-text-secondary);font-size:11px}
-.del-btn:hover{background:#FCEBEB;color:#A32D2D;border-color:#F7C1C1}
-#toast{position:fixed;top:16px;right:16px;padding:10px 16px;border-radius:var(--border-radius-md);font-size:13px;display:none;z-index:999;border:0.5px solid}
-.toast-ok{background:#EAF3DE;color:#3B6D11;border-color:#C0DD97}
-.toast-err{background:#FCEBEB;color:#A32D2D;border-color:#F7C1C1}
-@media print{.no-print{display:none!important}.app{max-width:100%}}
-</style>
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <header class="bg-blue-600 text-white p-6 rounded-2xl shadow-md mb-6 text-center no-print">
+            <h1 class="text-2xl font-bold tracking-wide">Sistem Penerimaan Uang Tata Usaha</h1>
+            <p class="text-blue-100 text-sm mt-1">Simpan data sementara, ekspor ke Excel, dan cetak laporan langsung</p>
+        </header>
 
-<h2 class="sr-only">Aplikasi Kasir Tata Usaha — input penerimaan uang dan laporan</h2>
-<div id="toast"></div>
-<div class="app">
-  <div class="header">
-    <h1><i class="ti ti-cash" aria-hidden="true"></i> Kasir Tata Usaha</h1>
-    <div id="syncBadge" class="sync-badge sync-loading"><i class="ti ti-cloud" aria-hidden="true"></i> <span>Menghubungkan...</span></div>
-  </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 h-fit no-print">
+                <h2 class="text-lg font-semibold text-gray-700 mb-4 border-b pb-2">Input Transaksi</h2>
+                <form id="formTransaksi" onsubmit="tambahData(event)">
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Nama Pembayar</label>
+                        <input type="text" id="nama" required class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Jumlah Uang (Rp)</label>
+                        <input type="number" id="jumlah" required min="1" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="mb-5">
+                        <label class="block text-sm font-medium text-gray-600 mb-1">Keperluan / Keterangan</label>
+                        <textarea id="keperluan" required rows="3" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl transition duration-200 shadow-sm cursor-pointer">
+                        Simpan ke Variabel
+                    </button>
+                </form>
+            </div>
 
-  <div class="cards">
-    <div class="stat"><label>Total Penerimaan</label><div class="val green" id="statTotal">Rp 0</div></div>
-    <div class="stat"><label>Jumlah Transaksi</label><div class="val" id="statCount">0</div></div>
-    <div class="stat"><label>Rata-rata</label><div class="val" id="statAvg">Rp 0</div></div>
-  </div>
+            <div class="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col justify-between">
+                <div id="areaCetak">
+                    <h2 class="text-lg font-semibold text-gray-700 mb-4 border-b pb-2 flex justify-between items-center">
+                        <span>Data Transaksi Hari Ini</span>
+                        <span id="badgeTotal" class="text-sm bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-bold">Total: Rp 0</span>
+                    </h2>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-500 text-sm border-b">
+                                    <th class="p-3 font-medium w-12 text-center">No</th>
+                                    <th class="p-3 font-medium">Nama Pembayar</th>
+                                    <th class="p-3 font-medium">Jumlah</th>
+                                    <th class="p-3 font-medium">Keperluan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabelBody" class="text-gray-700 text-sm divide-y divide-gray-100">
+                                <tr>
+                                    <td colspan="4" class="p-8 text-center text-gray-400 italic">Belum ada data di dalam variabel memori.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
 
-  <div class="form-card no-print">
-    <h2><i class="ti ti-plus" aria-hidden="true"></i> Tambah Transaksi</h2>
-    <div class="form-grid">
-      <div class="form-group">
-        <label>Tanggal</label>
-        <input type="date" id="inpDate">
-      </div>
-      <div class="form-group">
-        <label>Kategori</label>
-        <select id="inpKat">
-          <option>SPP</option><option>Uang Gedung</option><option>Seragam</option>
-          <option>Kegiatan</option><option>Buku</option><option>Lainnya</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>Nama Pembayar</label>
-        <input type="text" id="inpNama" placeholder="Nama siswa / wali">
-      </div>
-      <div class="form-group">
-        <label>Jumlah (Rp)</label>
-        <input type="text" id="inpJumlah" placeholder="0" inputmode="numeric">
-      </div>
+                <div class="flex gap-4 mt-6 pt-4 border-t border-gray-100 no-print">
+                    <button onclick="eksporExcel()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 px-4 rounded-xl transition duration-200 shadow-sm flex items-center justify-center gap-2 cursor-pointer">
+                        📊 Export ke Excel
+                    </button>
+                    <button onclick="cetakLaporan()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-medium py-2.5 px-4 rounded-xl transition duration-200 shadow-sm flex items-center justify-center gap-2 cursor-pointer">
+                        🖨️ Print Laporan
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="form-group" style="margin-bottom:12px">
-      <label>Keterangan</label>
-      <textarea id="inpKet" placeholder="Opsional..."></textarea>
-    </div>
-    <div class="btn-row">
-      <button class="btn primary" onclick="tambah()"><i class="ti ti-plus" aria-hidden="true"></i> Simpan Transaksi</button>
-      <button class="btn" onclick="resetForm()"><i class="ti ti-refresh" aria-hidden="true"></i> Reset</button>
-    </div>
-  </div>
 
-  <div class="table-card">
-    <h2>
-      <span><i class="ti ti-list" aria-hidden="true"></i> Daftar Transaksi</span>
-      <div class="btn-row no-print">
-        <button class="btn" onclick="exportExcel()"><i class="ti ti-file-spreadsheet" aria-hidden="true"></i> Export Excel</button>
-        <button class="btn" onclick="window.print()"><i class="ti ti-printer" aria-hidden="true"></i> Print</button>
-        <button class="btn danger" onclick="hapusSemua()"><i class="ti ti-trash" aria-hidden="true"></i> Hapus Semua</button>
-      </div>
-    </h2>
-    <div class="filter-row no-print">
-      <i class="ti ti-search" aria-hidden="true" style="color:var(--color-text-secondary)"></i>
-      <input type="text" id="filterNama" placeholder="Cari nama..." oninput="render()" style="flex:1">
-      <select id="filterKat" onchange="render()">
-        <option value="">Semua Kategori</option>
-        <option>SPP</option><option>Uang Gedung</option><option>Seragam</option>
-        <option>Kegiatan</option><option>Buku</option><option>Lainnya</option>
-      </select>
-    </div>
-    <div id="tblWrap"></div>
-  </div>
-</div>
+    <script>
+        // Variabel Array / List global untuk menyimpan data di memori browser
+        let dataKeuangan = [];
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script>
-let data = [];
-let synced = false;
+        // Fungsi Tambah Data ke Variabel
+        function tambahData(event) {
+            event.preventDefault();
 
-const STORAGE_KEY = 'kasir_tata_usaha_v1';
+            const nama = document.getElementById('nama').value;
+            const jumlah = parseFloat(document.getElementById('jumlah').value);
+            const keperluan = document.getElementById('keperluan').value;
 
-const katColor = {
-  SPP:'badge-green',Seragam:'badge-blue','Uang Gedung':'badge-amber',
-  Kegiatan:'badge-blue',Buku:'badge-green',Lainnya:'badge-amber'
-};
+            // Masukkan object data ke dalam array variabel
+            dataKeuangan.push({
+                "Nama Pembayar": nama,
+                "Jumlah Uang": jumlah,
+                "Keperluan": keperluan
+            });
 
-function fmtRp(n){
-  if(!n && n!==0) return 'Rp 0';
-  return 'Rp '+Number(n).toLocaleString('id-ID');
-}
+            // Reset Form input
+            document.getElementById('formTransaksi').reset();
 
-function parseRp(s){
-  return parseInt(s.replace(/[^0-9]/g,''))||0;
-}
+            // Perbarui tampilan tabel di layar
+            updateTabel();
+        }
 
-document.getElementById('inpJumlah').addEventListener('input',function(){
-  const raw = parseRp(this.value);
-  this.value = raw ? raw.toLocaleString('id-ID') : '';
-});
+        // Fungsi Render/Update Tabel HTML
+        function updateTabel() {
+            const tbody = document.getElementById('tabelBody');
+            const badgeTotal = document.getElementById('badgeTotal');
+            
+            if (dataKeuangan.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-400 italic">Belum ada data di dalam variabel memori.</td></tr>`;
+                badgeTotal.innerText = "Total: Rp 0";
+                return;
+            }
 
-document.getElementById('inpDate').value = new Date().toISOString().split('T')[0];
+            let html = '';
+            let totalUang = 0;
 
-function toast(msg, ok=true){
-  const t=document.getElementById('toast');
-  t.textContent=msg;
-  t.className=(ok?'toast-ok':'toast-err');
-  t.style.display='block';
-  setTimeout(()=>t.style.display='none',2500);
-}
+            dataKeuangan.forEach((data, index) => {
+                totalUang += data["Jumlah Uang"];
+                html += `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-3 text-center text-gray-400 font-medium">${index + 1}</td>
+                        <td class="p-3 font-semibold text-gray-800">${data["Nama Pembayar"]}</td>
+                        <td class="p-3 text-emerald-600 font-bold">Rp ${data["Jumlah Uang"].toLocaleString('id-ID')}</td>
+                        <td class="p-3 text-gray-500">${data["Keperluan"]}</td>
+                    </tr>
+                `;
+            });
 
-function setSyncBadge(state, msg){
-  const b=document.getElementById('syncBadge');
-  b.className='sync-badge '+(state==='ok'?'sync-ok':state==='err'?'sync-err':'sync-loading');
-  b.innerHTML=`<i class="ti ti-cloud" aria-hidden="true"></i> <span>${msg}</span>`;
-}
+            tbody.innerHTML = html;
+            badgeTotal.innerText = `Total: Rp ${totalUang.toLocaleString('id-ID')}`;
+        }
 
-async function loadCloud(){
-  try{
-    const r=await window.storage.get(STORAGE_KEY,true);
-    if(r&&r.value){
-      data=JSON.parse(r.value)||[];
-    }
-    setSyncBadge('ok','Cloud tersinkron');
-    synced=true;
-  }catch(e){
-    setSyncBadge('err','Mode lokal');
-    const ls=localStorage.getItem(STORAGE_KEY);
-    if(ls) try{data=JSON.parse(ls)||[];}catch(_){}
-  }
-  render();
-}
+        // Fungsi Ekspor ke format Excel (.xlsx) menggunakan SheetJS
+        function eksporExcel() {
+            if (dataKeuangan.length === 0) {
+                alert("Belum ada data untuk diekspor!");
+                return;
+            }
 
-async function saveCloud(){
-  try{
-    await window.storage.set(STORAGE_KEY,JSON.stringify(data),true);
-    localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
-    setSyncBadge('ok','Tersimpan & sinkron');
-  }catch(e){
-    localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
-    setSyncBadge('err','Lokal saja (cloud gagal)');
-  }
-}
+            // Ubah array of object menjadi worksheet Excel
+            const worksheet = XLSX.utils.json_to_sheet(dataKeuangan);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Laporan TU");
 
-function tambah(){
-  const tgl=document.getElementById('inpDate').value;
-  const kat=document.getElementById('inpKat').value;
-  const nama=document.getElementById('inpNama').value.trim();
-  const jml=parseRp(document.getElementById('inpJumlah').value);
-  const ket=document.getElementById('inpKet').value.trim();
+            // Download file Excel otomatis di browser
+            XLSX.writeFile(workbook, "Laporan_Tata_Usaha.xlsx");
+        }
 
-  if(!tgl){toast('Tanggal wajib diisi',false);return;}
-  if(!nama){toast('Nama pembayar wajib diisi',false);return;}
-  if(!jml||jml<=0){toast('Jumlah harus lebih dari 0',false);return;}
-
-  const trx={
-    id:Date.now()+'',
-    tgl,kat,nama,jml,ket,
-    waktu:new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'})
-  };
-  data.unshift(trx);
-  saveCloud();
-  render();
-  toast('Transaksi berhasil disimpan ✓');
-  document.getElementById('inpNama').value='';
-  document.getElementById('inpJumlah').value='';
-  document.getElementById('inpKet').value='';
-}
-
-function hapus(id){
-  if(!confirm('Hapus transaksi ini?')) return;
-  data=data.filter(d=>d.id!==id);
-  saveCloud();
-  render();
-  toast('Transaksi dihapus');
-}
-
-function hapusSemua(){
-  if(!data.length){toast('Tidak ada data',false);return;}
-  if(!confirm('Hapus SEMUA transaksi? Tindakan ini tidak bisa dibatalkan.')) return;
-  data=[];
-  saveCloud();
-  render();
-  toast('Semua data dihapus');
-}
-
-function resetForm(){
-  document.getElementById('inpNama').value='';
-  document.getElementById('inpJumlah').value='';
-  document.getElementById('inpKet').value='';
-  document.getElementById('inpDate').value=new Date().toISOString().split('T')[0];
-}
-
-function filtered(){
-  const fn=document.getElementById('filterNama').value.toLowerCase();
-  const fk=document.getElementById('filterKat').value;
-  return data.filter(d=>{
-    const matchN=!fn||d.nama.toLowerCase().includes(fn);
-    const matchK=!fk||d.kat===fk;
-    return matchN&&matchK;
-  });
-}
-
-function render(){
-  const fd=filtered();
-  const total=fd.reduce((a,b)=>a+b.jml,0);
-  const avg=fd.length?Math.round(total/fd.length):0;
-  document.getElementById('statTotal').textContent=fmtRp(total);
-  document.getElementById('statCount').textContent=fd.length+' transaksi';
-  document.getElementById('statAvg').textContent=fmtRp(avg);
-
-  const wrap=document.getElementById('tblWrap');
-  if(!fd.length){
-    wrap.innerHTML='<div class="empty"><i class="ti ti-inbox" style="font-size:32px;display:block;margin-bottom:8px" aria-hidden="true"></i>Belum ada transaksi</div>';
-    return;
-  }
-
-  let rows=fd.map(d=>`
-    <tr>
-      <td>${d.tgl}<br><span style="font-size:11px;color:var(--color-text-secondary)">${d.waktu||''}</span></td>
-      <td>${d.nama}</td>
-      <td><span class="badge ${katColor[d.kat]||'badge-blue'}">${d.kat}</span></td>
-      <td style="font-weight:500">${fmtRp(d.jml)}</td>
-      <td style="color:var(--color-text-secondary);font-size:12px">${d.ket||'-'}</td>
-      <td class="no-print"><button class="del-btn" onclick="hapus('${d.id}')"><i class="ti ti-trash" aria-hidden="true"></i></button></td>
-    </tr>`).join('');
-
-  wrap.innerHTML=`<table>
-    <thead><tr>
-      <th>Tanggal</th><th>Nama</th><th>Kategori</th>
-      <th>Jumlah</th><th>Keterangan</th><th class="no-print"></th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table>
-  <div style="padding:10px 14px;text-align:right;font-size:13px;border-top:0.5px solid var(--color-border-tertiary);font-weight:500;background:var(--color-background-secondary)">
-    Total: <span style="color:#3B6D11">${fmtRp(total)}</span>
-  </div>`;
-}
-
-function exportExcel(){
-  const fd=filtered();
-  if(!fd.length){toast('Tidak ada data untuk diekspor',false);return;}
-
-  const ws_data=[
-    ['LAPORAN PENERIMAAN KEUANGAN','','','',''],
-    ['Dicetak pada: '+new Date().toLocaleDateString('id-ID',{weekday:'long',year:'numeric',month:'long',day:'numeric'}),'','','',''],
-    [''],
-    ['No','Tanggal','Nama Pembayar','Kategori','Jumlah (Rp)','Keterangan'],
-    ...fd.map((d,i)=>[i+1,d.tgl,d.nama,d.kat,d.jml,d.ket||'']),
-    [''],
-    ['','','','TOTAL',fd.reduce((a,b)=>a+b.jml,0),''],
-    ['','','','JUMLAH TRANSAKSI',fd.length,''],
-    ['','','','RATA-RATA',fd.length?Math.round(fd.reduce((a,b)=>a+b.jml,0)/fd.length):0,''],
-  ];
-
-  const wb=XLSX.utils.book_new();
-  const ws=XLSX.utils.aoa_to_sheet(ws_data);
-
-  ws['!cols']=[{wch:5},{wch:14},{wch:22},{wch:14},{wch:18},{wch:30}];
-  ws['!merges']=[
-    {s:{r:0,c:0},e:{r:0,c:5}},
-    {s:{r:1,c:0},e:{r:1,c:5}},
-  ];
-
-  const total=fd.reduce((a,b)=>a+b.jml,0);
-  const totRow=ws_data.length-2;
-  if(ws['E'+totRow]) ws['E'+totRow].z='#,##0';
-
-  XLSX.utils.book_append_sheet(wb,ws,'Laporan');
-  const fname='Laporan_Keuangan_'+new Date().toISOString().split('T')[0]+'.xlsx';
-  XLSX.writeFile(wb,fname);
-  toast('File Excel berhasil diunduh ✓');
-}
-
-loadCloud();
-
-setInterval(async()=>{
-  try{
-    const r=await window.storage.get(STORAGE_KEY,true);
-    if(r&&r.value){
-      const remote=JSON.parse(r.value)||[];
-      if(JSON.stringify(remote)!==JSON.stringify(data)){
-        data=remote;
-        render();
-        toast('Data diperbarui dari perangkat lain');
-      }
-    }
-  }catch(_){}
-},15000);
-</script>
+        // Fungsi Print Laporan (Memanggil Print Dialog Browser)
+        function cetakLaporan() {
+            if (dataKeuangan.length === 0) {
+                alert("Belum ada data untuk dicetak!");
+                return;
+            }
+            // Memicu printer bawaan OS/Browser
+            window.print();
+        }
+    </script>
+</body>
+</html>
