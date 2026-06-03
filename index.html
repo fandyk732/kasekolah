@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Keuangan Tata Usaha v3.0</title>
+    <title>Sistem Keuangan Tata Usaha v4.0</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- SheetJS untuk Excel (Read & Write) -->
@@ -48,13 +48,13 @@
         <header class="flex flex-col sm:flex-row justify-between items-center bg-gradient-to-r from-indigo-600 to-violet-600 text-white p-6 rounded-3xl shadow-lg mb-6 gap-4 no-print">
             <div class="text-center sm:text-left">
                 <h1 class="text-xl md:text-2xl font-bold tracking-wide">Sistem Keuangan Tata Usaha</h1>
-                <p class="text-indigo-100 text-xs md:text-sm mt-0.5">Manajemen Kas & Pembayaran Siswa Terintegrasi</p>
+                <p class="text-indigo-100 text-xs md:text-sm mt-0.5">Manajemen Kas & Pembayaran Siswa Terintegrasi (Cloud)</p>
             </div>
             <div class="flex items-center gap-2">
                 <button onclick="downloadTemplateSiswa()" class="bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-medium px-3 py-2 rounded-xl transition cursor-pointer">📥 Template Siswa</button>
                 <label class="bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-medium px-3 py-2 rounded-xl transition cursor-pointer text-center">
-                    📤 Upload Siswa
-                    <input type="file" id="fileSiswa" accept=".xlsx, .xls" class="hidden" onchange="importDataSiswa(event)">
+                    📤 Upload Siswa Ke Cloud
+                    <input type="file" id="fileSiswa" accept=".xlsx, .xls" class="hidden" onchange="importDataSiswaKeCloud(event)">
                 </label>
                 <button onclick="prosesLogout()" class="bg-rose-50 hover:bg-rose-600 text-white text-xs font-medium px-3 py-2 rounded-xl transition cursor-pointer">🚪 Keluar</button>
             </div>
@@ -133,11 +133,11 @@
                         </select>
                     </div>
 
-                    <!-- FASILITAS PENCARIAN SISWA PINTAR (NAMA / JURUSAN) -->
+                    <!-- FASILITAS PENCARIAN SISWA PINTAR BERDASARKAN CLOUD -->
                     <div class="mb-4 relative" id="containerNamaSiswa">
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cari Nama Siswa / Jurusan</label>
                         <input type="text" id="cariSiswaInput" placeholder="Ketik nama siswa atau kode jurusan..." oninput="pencarianSiswaDinamis(this.value)" onfocus="pencarianSiswaDinamis(this.value)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" autocomplete="off">
-                        <!-- Kotak Hasil Rekomendasi Dropdown Dropdown -->
+                        <!-- Kotak Hasil Rekomendasi Dropdown -->
                         <div id="boxHasilSiswa" class="hidden absolute left-0 right-0 top-[100%] bg-white border border-slate-200 rounded-xl shadow-xl mt-1 max-h-48 overflow-y-auto z-50 divide-y divide-slate-100">
                             <!-- Hasil Pencarian Masuk Sini -->
                         </div>
@@ -254,7 +254,7 @@
     <!-- FIREBASE ENGINE LOGIC -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, getDocs, deleteDoc, doc, writeBatch } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         // ⚠️ PASTE CONFIG FIREBASE ANDA DI SINI
         const firebaseConfig = {
@@ -269,13 +269,75 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const koleksiTransaksi = collection(db, "transaksi_tu");
+        const koleksiMasterSiswa = collection(db, "master_siswa_cloud");
 
         window.dataMasterCloud = [];
         window.dataFilteredLokal = [];
+        window.siswaCloudCache = []; // Tempat simpan data siswa dari Firebase secara lokal di memory
 
         document.getElementById('tanggal').valueAsDate = new Date();
 
-        // 1. KIRIM DATA KE FIREBASE
+        // A. LISTEN DATA SISWA DARI FIREBASE SECARA REAL-TIME
+        onSnapshot(koleksiMasterSiswa, (snapshot) => {
+            window.siswaCloudCache = [];
+            snapshot.forEach((doc) => {
+                window.siswaCloudCache.push(doc.data());
+            });
+            console.log("Master siswa cloud synced:", window.siswaCloudCache.length);
+        });
+
+        // B. PROSES IMPORT EXCEL DAN LANGSUNG KIRIM KE FIREBASE
+        window.importDataSiswaKeCloud = function(e) {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = async function(evt) {
+                const data = evt.target.result;
+                const workbook = XLSX.read(data, {type: 'binary'});
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const jsonSiswa = XLSX.utils.sheet_to_json(sheet);
+                
+                if(jsonSiswa.length > 0 && jsonSiswa[0]["Nama Siswa"]) {
+                    if(confirm(`Kamu akan mengunggah ${jsonSiswa.length} data siswa baru ke Firebase Cloud. Lanjutkan?`)) {
+                        
+                        // Hapus data siswa lama di cloud dulu agar bersih
+                        const snapLama = await getDocs(koleksiMasterSiswa);
+                        const batchDelete = writeBatch(db);
+                        snapLama.forEach((d) => batchDelete.delete(doc(db, "master_siswa_cloud", d.id)));
+                        await batchDelete.commit();
+
+                        // Masukkan data siswa baru menggunakan Batch (Biar Cepat)
+                        let batchInsert = writeBatch(db);
+                        let counter = 0;
+
+                        for(let siswa of jsonSiswa) {
+                            let docRef = doc(koleksiMasterSiswa);
+                            batchInsert.set(docRef, {
+                                "Nama Siswa": siswa["Nama Siswa"],
+                                "Kelas": siswa["Kelas"] || "Umum"
+                            });
+                            counter++;
+
+                            // Batasan Firestore batch adalah 500 per operasi
+                            if(counter === 490) {
+                                await batchInsert.commit();
+                                batchInsert = writeBatch(db);
+                                counter = 0;
+                            }
+                        }
+                        if(counter > 0) {
+                            await batchInsert.commit();
+                        }
+
+                        alert("Mantap! Semua data siswa berhasil disimpan ke database cloud!");
+                    }
+                } else { alert("Format template salah. Pastikan ada kolom 'Nama Siswa' dan 'Kelas'."); }
+            };
+            reader.readAsBinaryString(file);
+        }
+
+        // C. KIRIM DATA TRANSAKSI KE FIREBASE
         window.tambahDataKeCloud = async function(event) {
             event.preventDefault();
             const jenisKas = document.querySelector('input[name="jenis_kas"]:checked').value;
@@ -311,7 +373,7 @@
             } catch (e) { alert("Gagal kirim data: " + e.message); }
         }
 
-        // 2. REAL-TIME SNAPSHOT LISTENER
+        // D. REAL-TIME SNAPSHOT LISTENER TRANSAKSI
         const q = query(koleksiTransaksi, orderBy("tanggal", "desc"), orderBy("waktuInput", "desc"));
         onSnapshot(q, (snapshot) => {
             window.dataMasterCloud = [];
@@ -333,16 +395,16 @@
             window.filterDataSemua();
         });
 
-        // 3. HAPUS SATU TRANSAKSI
+        // E. HAPUS SATU TRANSAKSI
         window.hapusSatuTransaksi = async function(idDocument, namaTerhapus) {
             if(confirm(`Apakah kamu yakin ingin menghapus transaksi atas nama "${namaTerhapus}" dari cloud?`)) {
                 try { await deleteDoc(doc(db, "transaksi_tu", idDocument)); } catch(e) { alert("Gagal hapus: " + e.message); }
             }
         }
 
-        // 4. RESET DATABASE TOTAL
+        // F. RESET DATABASE TOTAL
         window.hapusSemuaData = async function() {
-            if(confirm("Hapus seluruh data cloud permanen?")) {
+            if(confirm("Hapus seluruh data transaksi cloud permanen?")) {
                 const snap = await getDocs(koleksiTransaksi);
                 snap.forEach(async (d) => await deleteDoc(doc(db, "transaksi_tu", d.id)));
             }
@@ -358,21 +420,20 @@
             }
         });
 
-        // LIVE SEARCH SISWA BERDASARKAN NAMA / JURUSAN (KELAS)
+        // LIVE SEARCH SISWA BERDASARKAN DATA REALTIME CLODE (NAMA / JURUSAN)
         function pencarianSiswaDinamis(keyword) {
             const box = document.getElementById('boxHasilSiswa');
-            const dataSiswaLokal = localStorage.getItem('master_siswa');
+            const listSiswa = window.siswaCloudCache || [];
             
-            if(!dataSiswaLokal) {
-                box.innerHTML = `<div class="p-3 text-xs text-rose-500 italic">Silakan upload data excel siswa terlebih dahulu di pojok kanan atas!</div>`;
+            if(listSiswa.length === 0) {
+                box.innerHTML = `<div class="p-3 text-xs text-rose-500 italic">Database siswa di cloud kosong. Silakan upload file excel data siswa dulu di laptop/PC melalui tombol di kanan atas!</div>`;
                 box.classList.remove('hidden');
                 return;
             }
 
-            const listSiswa = JSON.parse(dataSiswaLokal);
             const key = keyword.toLowerCase().trim();
 
-            // Filter pencarian ganda (Nama atau Jurusan/Kelas)
+            // Filter ganda (Mencocokkan nama atau jurusan/kelas)
             const hasilFilter = listSiswa.filter(s => {
                 const nama = s["Nama Siswa"] ? s["Nama Siswa"].toString().toLowerCase() : "";
                 const kelas = s["Kelas"] ? s["Kelas"].toString().toLowerCase() : "";
@@ -387,11 +448,11 @@
 
             // Render opsi rekomendasi
             let htmlOptions = "";
-            hasilFilter.slice(0, 15).forEach(s => {  // Limit max 15 hasil biar ga kepanjangan
+            hasilFilter.slice(0, 15).forEach(s => {  
                 let teksLengkap = `${s["Nama Siswa"]} (${s["Kelas"]})`;
                 htmlOptions += `
                     <div onclick="pilihSiswaDariBox('${teksLengkap}')" class="p-2.5 text-xs sm:text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer transition font-medium">
-                        🔍 ${s["Nama Siswa"]} — <span class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 font-bold">${s["Kelas"]}</span>
+                        🔍 ${s["Nama Siswa"]} — <span class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 font-bold text-[11px]">${s["Kelas"]}</span>
                     </div>
                 `;
             });
@@ -450,25 +511,6 @@
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Master Siswa");
             XLSX.writeFile(wb, "Template_Siswa.xlsx");
-        }
-
-        function importDataSiswa(e) {
-            const file = e.target.files[0];
-            if(!file) return;
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                const data = evt.target.result;
-                const workbook = XLSX.read(data, {type: 'binary'});
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
-                const jsonSiswa = XLSX.utils.sheet_to_json(sheet);
-                
-                if(jsonSiswa.length > 0 && jsonSiswa[0]["Nama Siswa"]) {
-                    localStorage.setItem('master_siswa', JSON.stringify(jsonSiswa));
-                    alert(`Sukses import ${jsonSiswa.length} data siswa ke sistem!`);
-                } else { alert("Format template salah. Pastikan ada kolom 'Nama Siswa' dan 'Kelas'."); }
-            };
-            reader.readAsBinaryString(file);
         }
 
         // FUNGSI FILTER LAPORAN UTAMA & RENDER TABLE
