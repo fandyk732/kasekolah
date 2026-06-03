@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Keuangan Tata Usaha v2.0</title>
+    <title>Sistem Keuangan Tata Usaha v2.5</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- SheetJS untuk Excel (Read & Write) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         /* CSS Cetak Pintar */
@@ -18,6 +20,7 @@
 </head>
 <body class="bg-slate-50 font-sans min-h-screen text-slate-800">
 
+    <!-- 1. HALAMAN LOGIN -->
     <div id="halamanLogin" class="flex min-h-screen items-center justify-center p-4">
         <div class="bg-white p-8 rounded-3xl shadow-xl border border-slate-100 w-full max-w-md">
             <div class="text-center mb-8">
@@ -39,7 +42,9 @@
         </div>
     </div>
 
+    <!-- 2. DASHBOARD UTAMA -->
     <div id="halamanDashboard" class="hidden max-w-7xl mx-auto px-4 py-6">
+        <!-- Header -->
         <header class="flex flex-col sm:flex-row justify-between items-center bg-gradient-to-r from-indigo-600 to-violet-600 text-white p-6 rounded-3xl shadow-lg mb-6 gap-4 no-print">
             <div class="text-center sm:text-left">
                 <h1 class="text-xl md:text-2xl font-bold tracking-wide">Sistem Keuangan Tata Usaha</h1>
@@ -55,6 +60,7 @@
             </div>
         </header>
 
+        <!-- Widgets Saldo -->
         <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6 no-print">
             <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-xs">
                 <span class="text-xs text-slate-400 font-medium block">Total Pemasukan (Filter)</span>
@@ -71,10 +77,12 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Kolom Kiri: Form Input -->
             <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 h-fit no-print">
                 <h2 class="text-base font-bold text-slate-700 mb-4 border-b border-slate-100 pb-2">Input Transaksi</h2>
                 <form id="formTransaksi" onsubmit="tambahDataKeCloud(event)">
                     
+                    <!-- Arus Kas -->
                     <div class="mb-4">
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Arus Kas</label>
                         <div class="grid grid-cols-2 gap-2">
@@ -89,13 +97,15 @@
                         </div>
                     </div>
 
+                    <!-- Tanggal -->
                     <div class="mb-4">
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Tanggal</label>
                         <input type="date" id="tanggal" required class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm">
                     </div>
 
+                    <!-- Kategori Pembayaran -->
                     <div class="mb-4">
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Kategori Kategori</label>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Kategori</label>
                         <select id="kategori" required class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white text-sm">
                             <option value="" disabled selected>Pilih Kategori...</option>
                             <optgroup label="Pemasukan (Siswa/Pusat)">
@@ -123,6 +133,7 @@
                         </select>
                     </div>
 
+                    <!-- Nama Pihak / Dropdown Siswa -->
                     <div class="mb-4" id="containerNamaSiswa">
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nama Siswa (Pilih)</label>
                         <select id="namaSiswaDropdown" class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white text-sm">
@@ -134,10 +145,12 @@
                         <input type="text" id="namaManual" placeholder="Nama instansi / toko / guru" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm">
                     </div>
 
+                    <!-- Nominal Uang (Input Text dengan Masking Koma) -->
                     <div class="mb-4">
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nominal (Rp)</label>
-                        <input type="number" id="jumlah" required min="1" placeholder="Angka saja" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm">
+                        <input type="text" id="jumlahDisplay" required placeholder="Contoh: 500,000" oninput="formatInputRibuan(this)" class="w-full px-3 py-2 border border-slate-200 rounded-xl font-semibold text-slate-700 text-sm">
                     </div>
+                    
                     <div class="mb-5">
                         <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Keterangan</label>
                         <textarea id="keterangan" required rows="2" placeholder="Detail transaksi..." class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm"></textarea>
@@ -147,7 +160,9 @@
                 </form>
             </div>
 
+            <!-- Kolom Kanan: Filter Laporan & Tabel -->
             <div class="lg:col-span-2 flex flex-col gap-4">
+                <!-- PANEL FILTERS (LAPORAN) -->
                 <div class="bg-white p-5 rounded-2xl shadow-xs border border-slate-200 no-print">
                     <h2 class="text-sm font-bold text-slate-700 mb-3 uppercase tracking-wider">Fasilitas Filter Laporan</h2>
                     <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -172,8 +187,10 @@
                     </div>
                 </div>
 
+                <!-- AREA CETAK TABEL -->
                 <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 flex-1 flex flex-col justify-between">
                     <div id="areaCetak">
+                        <!-- Tampilan Cetak Struk Tunggal (Tersembunyi di Web) -->
                         <div id="strukTunggalBox" class="hidden print:block p-6 border-2 border-dashed border-slate-400 max-w-sm mx-auto text-sm mb-6">
                             <div class="text-center font-bold text-lg mb-1">KASIR TATA USAHA SCHOOL</div>
                             <div class="text-center text-xs mb-4">Bukti Pembayaran Dokumen Resmi</div>
@@ -194,10 +211,11 @@
                             <div class="text-center text-[10px] italic text-slate-500">Terima kasih atas pembayaran Anda. Simpan bukti ini secara sah.</div>
                         </div>
 
+                        <!-- Laporan Utama Tabel Global -->
                         <div id="tabelLaporanUtama">
                             <h2 class="text-base font-bold text-slate-700 mb-4 border-b border-slate-100 pb-2">Riwayat Pembayaran Keuangan</h2>
                             <div class="overflow-x-auto">
-                                <table class="w-full text-left border-collapse min-w-[650px]">
+                                <table class="w-full text-left border-collapse min-w-[700px]">
                                     <thead>
                                         <tr class="bg-slate-50 text-slate-400 text-xs font-semibold border-b border-slate-100 uppercase">
                                             <th class="p-3 w-10 text-center">No</th>
@@ -205,7 +223,7 @@
                                             <th class="p-3 w-28">Kategori</th>
                                             <th class="p-3">Nama / Keterangan</th>
                                             <th class="p-3 text-right w-32">Nominal</th>
-                                            <th class="p-3 text-center w-20 no-print">Aksi</th>
+                                            <th class="p-3 text-center w-36 no-print">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody id="tabelBody" class="text-slate-700 text-xs md:text-sm divide-y divide-slate-100">
@@ -216,6 +234,7 @@
                         </div>
                     </div>
 
+                    <!-- Tombol Aksi -->
                     <div class="flex flex-wrap sm:flex-nowrap gap-2 mt-6 pt-4 border-t border-slate-100 no-print">
                         <button onclick="eksporExcelFiltered()" class="w-full sm:flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1 cursor-pointer">📊 Export Filtered Excel</button>
                         <button onclick="cetakLaporanLengkap()" class="w-full sm:flex-1 bg-amber-500 hover:bg-amber-600 text-white font-medium py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1 cursor-pointer">🖨️ Print Laporan Sesuai Filter</button>
@@ -226,6 +245,7 @@
         </div>
     </div>
 
+    <!-- FIREBASE & CORE ENGINE LOGIC -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -255,9 +275,14 @@
             const jenisKas = document.querySelector('input[name="jenis_kas"]:checked').value;
             const tanggal = document.getElementById('tanggal').value;
             const kategori = document.getElementById('kategori').value;
-            const jumlah = parseFloat(document.getElementById('jumlah').value);
             const keterangan = document.getElementById('keterangan').value;
             
+            // Ambil nominal asli tanpa koma
+            const rawJumlah = document.getElementById('jumlahDisplay').value.replace(/,/g, '');
+            const jumlah = parseFloat(rawJumlah);
+
+            if(isNaN(jumlah) || jumlah <= 0) { alert("Nominal uang tidak valid, bro!"); return; }
+
             let nama = "";
             if(jenisKas === "Pemasukan") {
                 nama = document.getElementById('namaSiswaDropdown').value;
@@ -271,7 +296,7 @@
                 await addDoc(koleksiTransaksi, {
                     jenisKas, tanggal, kategori, nama, jumlah, keterangan, waktuInput: new Date().getTime()
                 });
-                document.getElementById('jumlah').value = '';
+                document.getElementById('jumlahDisplay').value = '';
                 document.getElementById('keterangan').value = '';
                 document.getElementById('namaManual').value = '';
                 document.getElementById('kategori').selectedIndex = 0;
@@ -291,18 +316,27 @@
                 setKategori.add(d.kategori);
             });
 
-            // Update Filter Kategori Dropdown otomatis
             const fKat = document.getElementById('filterKategori');
             fKat.innerHTML = '<option value="SEMUA">-- Semua Kategori --</option>';
             setKategori.forEach(k => {
                 fKat.innerHTML += `<option value="${k}">${k}</option>`;
             });
 
-            // Jalankan render filter
             window.filterDataSemua();
         });
 
-        // 3. RESET DATABASE
+        // 3. HAPUS SATU TRANSAKSI BERDASARKAN ID CLOUD
+        window.hapusSatuTransaksi = async function(idDocument, namaTerhapus) {
+            if(confirm(`Apakah kamu yakin ingin menghapus transaksi atas nama "${namaTerhapus}" dari cloud database?`)) {
+                try {
+                    await deleteDoc(doc(db, "transaksi_tu", idDocument));
+                } catch(e) {
+                    alert("Gagal menghapus data: " + e.message);
+                }
+            }
+        }
+
+        // 4. RESET DATABASE TOTAL
         window.hapusSemuaData = async function() {
             if(confirm("Hapus seluruh data cloud permanen?")) {
                 const snap = await getDocs(koleksiTransaksi);
@@ -311,7 +345,21 @@
         }
     </script>
 
+    <!-- INTERAKSI FRONTEND, EXCEL, MASKING, & FILTER -->
     <script>
+        // Real-time Format Ribuan (Pemisah Koma) Saat Ngetik
+        function formatInputRibuan(input) {
+            // Bersihkan semua karakter selain angka
+            let value = input.value.replace(/[^0-9]/g, '');
+            
+            // Format angka menjadi string dengan pemisah koma
+            if (value !== "") {
+                input.value = Number(value).toLocaleString('en-US');
+            } else {
+                input.value = "";
+            }
+        }
+
         // Data Login
         function prosesLogin(e){
             e.preventDefault();
@@ -326,7 +374,6 @@
             document.getElementById('halamanLogin').classList.remove('hidden');
         }
 
-        // Toggle Form Input Nama berdasarkan Arus Kas
         function toggleInputNama() {
             const jenis = document.querySelector('input[name="jenis_kas"]:checked').value;
             if(jenis === "Pemasukan") {
@@ -338,7 +385,6 @@
             }
         }
 
-        // DOWNLOAD & UPLOAD TEMPLATE MASTER SISWA (LocalStorage)
         function downloadTemplateSiswa() {
             const dataDummy = [
                 {"Nama Siswa": "Andi Wijaya", "Kelas": "X-RPL-1"},
@@ -383,7 +429,7 @@
             }
         }
 
-        // FUNGSI UTAMA FILTER DATA (LAPORAN)
+        // FUNGSI UTAMA FILTER DATA & RENDER TABLE
         function filterDataSemua() {
             if(!window.dataMasterCloud) return;
 
@@ -400,15 +446,11 @@
             let idx = 1;
 
             window.dataMasterCloud.forEach(d => {
-                // Filter tanggal
                 if(tglMulai && d.tanggal < tglMulai) return;
                 if(tglSelesai && d.tanggal > tglSelesai) return;
-                // Filter kategori
                 if(kat !== "SEMUA" && d.kategori !== kat) return;
-                // Filter pencarian nama
                 if(cariNama && !d.nama.toLowerCase().includes(cariNama)) return;
 
-                // Hitung total filtered
                 if(d.jenisKas === "Pemasukan") totalPemasukan += d.jumlah;
                 else totalPengeluaran += d.jumlah;
 
@@ -426,8 +468,9 @@
                         <td class="p-3 text-right font-bold ${d.jenisKas==='Pemasukan'?'text-emerald-600':'text-rose-600'}">
                             ${d.jenisKas==='Pemasukan'?'+':'-'} Rp ${d.jumlah.toLocaleString('id-ID')}
                         </td>
-                        <td class="p-3 text-center no-print">
+                        <td class="p-3 text-center no-print flex justify-center gap-1">
                             <button onclick="cetakStrukTunggal(${idx-1})" class="bg-slate-100 hover:bg-indigo-100 hover:text-indigo-600 px-2 py-1 rounded text-slate-500 font-medium text-[11px] transition cursor-pointer">🖨️ Struk</button>
+                            <button onclick="hapusSatuTransaksi('${d.id}', '${d.nama}')" class="bg-rose-50 hover:bg-rose-600 hover:text-white px-2 py-1 rounded text-rose-600 font-medium text-[11px] transition cursor-pointer">🗑️ Hapus</button>
                         </td>
                     </tr>
                 `;
@@ -436,13 +479,11 @@
 
             document.getElementById('tabelBody').innerHTML = html || `<tr><td colspan="6" class="p-8 text-center text-slate-400 italic">Data tidak ditemukan sesuai filter.</td></tr>`;
             
-            // Update widget atas berdasarkan filter saat ini
             document.getElementById('widgetPemasukan').innerText = `Rp ${totalPemasukan.toLocaleString('id-ID')}`;
             document.getElementById('widgetPengeluaran').innerText = `Rp ${totalPengeluaran.toLocaleString('id-ID')}`;
             document.getElementById('widgetSaldo').innerText = `Rp ${(totalPemasukan - totalPengeluaran).toLocaleString('id-ID')}`;
         }
 
-        // AKSI EKSPOR & PRINT BERDASARKAN FILTER
         function eksporExcelFiltered() {
             if(window.dataFilteredLokal.length === 0) { alert("Tidak ada data untuk diekspor!"); return; }
             let dataFormat = window.dataFilteredLokal.map((d, i) => ({
@@ -455,18 +496,15 @@
         }
 
         function cetakLaporanLengkap() {
-            // Memastikan cetakan menampilkan tabel utuh
             document.getElementById('tabelLaporanUtama').classList.remove('print:hidden');
             document.getElementById('strukTunggalBox').classList.add('hidden');
             window.print();
         }
 
-        // PRINT STRUK TUNGGAL PER BARIS
         function cetakStrukTunggal(indexInFiltered) {
             const data = window.dataFilteredLokal[indexInFiltered];
             if(!data) return;
 
-            // Isi box struk dengan data spesifik
             document.getElementById('s_id').innerText = data.id.substring(0,8).toUpperCase();
             document.getElementById('s_tgl').innerText = data.tanggal;
             document.getElementById('s_jenis').innerText = data.jenisKas;
@@ -475,7 +513,6 @@
             document.getElementById('s_ket').innerText = data.keterangan;
             document.getElementById('s_total').innerText = `Rp ${data.jumlah.toLocaleString('id-ID')}`;
 
-            // Sembunyikan tabel laporan utama saat print, munculkan nota struk kecil saja
             document.getElementById('tabelLaporanUtama').classList.add('print:hidden');
             document.getElementById('strukTunggalBox').classList.remove('hidden');
             
