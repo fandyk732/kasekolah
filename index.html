@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Keuangan Tata Usaha v5.0</title>
+    <title>Sistem Keuangan Tata Usaha v6.0</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- SheetJS untuk Excel (Read & Write) -->
+    <!-- SheetJS untuk Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-        /* CSS Cetak Pintar */
         @media print {
             body * { visibility: hidden; }
             #areaCetak, #areaCetak * { visibility: visible; }
@@ -26,7 +25,7 @@
             <div class="text-center mb-8">
                 <div class="bg-indigo-100 text-indigo-600 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">🏫</div>
                 <h2 class="text-2xl font-bold text-slate-800">Login Tata Usaha</h2>
-                <p class="text-slate-400 text-sm mt-1">Silakan masuk untuk mengelola keuangan</p>
+                <p class="text-slate-400 text-sm mt-1">Sistem Buku Kas Dinamis Cloud</p>
             </div>
             <form onsubmit="prosesLogin(event)">
                 <div class="mb-4">
@@ -48,13 +47,13 @@
         <header class="flex flex-col lg:flex-row justify-between items-center bg-gradient-to-r from-indigo-600 to-violet-600 text-white p-6 rounded-3xl shadow-lg mb-6 gap-4 no-print">
             <div class="text-center lg:text-left">
                 <h1 class="text-xl md:text-2xl font-bold tracking-wide">Sistem Keuangan Tata Usaha</h1>
-                <p class="text-indigo-100 text-xs md:text-sm mt-0.5">Manajemen Kas & Pembayaran Siswa Terintegrasi (Cloud)</p>
+                <p class="text-indigo-100 text-xs md:text-sm mt-0.5">Manajemen Kas Fleksibel Sesuai Buku Manual (Cloud)</p>
             </div>
             <div class="flex flex-wrap items-center justify-center gap-2">
                 <button onclick="bukaModalSiswa()" class="bg-amber-400 hover:bg-amber-500 text-slate-900 text-xs font-bold px-3 py-2 rounded-xl transition cursor-pointer shadow-sm">➕ Tambah Siswa Manual</button>
-                <button onclick="downloadTemplateSiswa()" class="bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-medium px-3 py-2 rounded-xl transition cursor-pointer">📥 Template</button>
+                <button onclick="downloadTemplateSiswa()" class="bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-medium px-3 py-2 rounded-xl transition cursor-pointer">📥 Template Siswa</button>
                 <label class="bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-medium px-3 py-2 rounded-xl transition cursor-pointer text-center">
-                    📤 Upload Excel
+                    📤 Upload Excel Siswa
                     <input type="file" id="fileSiswa" accept=".xlsx, .xls" class="hidden" onchange="importDataSiswaKeCloud(event)">
                 </label>
                 <button onclick="prosesLogout()" class="bg-rose-50 hover:bg-rose-600 text-white text-xs font-medium px-3 py-2 rounded-xl transition cursor-pointer">🚪 Keluar</button>
@@ -80,19 +79,19 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- Kolom Kiri: Form Input -->
             <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200 h-fit no-print">
-                <h2 class="text-base font-bold text-slate-700 mb-4 border-b border-slate-100 pb-2">Input Transaksi</h2>
+                <h2 class="text-base font-bold text-slate-700 mb-4 border-b border-slate-100 pb-2">Input Transaksi Dinamis</h2>
                 <form id="formTransaksi" onsubmit="tambahDataKeCloud(event)">
                     
-                    <!-- Arus Kas -->
+                    <!-- 1. ALUR UTAMA: PILIH ARUS KAS DULU -->
                     <div class="mb-4">
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Arus Kas</label>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">1. Pilih Alur Transaksi</label>
                         <div class="grid grid-cols-2 gap-2">
                             <label class="border border-slate-200 rounded-xl p-2.5 flex items-center gap-2 cursor-pointer bg-slate-50 has-[:checked]:border-emerald-500 has-[:checked]:bg-emerald-50">
-                                <input type="radio" name="jenis_kas" value="Pemasukan" checked onchange="toggleInputNama()" class="text-emerald-600">
+                                <input type="radio" name="jenis_kas" value="Pemasukan" checked onchange="handleAlurPerubahan()" class="text-emerald-600">
                                 <span class="text-sm font-medium text-slate-700">Pemasukan</span>
                             </label>
                             <label class="border border-slate-200 rounded-xl p-2.5 flex items-center gap-2 cursor-pointer bg-slate-50 has-[:checked]:border-rose-500 has-[:checked]:bg-rose-50">
-                                <input type="radio" name="jenis_kas" value="Pengeluaran" onchange="toggleInputNama()" class="text-rose-600">
+                                <input type="radio" name="jenis_kas" value="Pengeluaran" onchange="handleAlurPerubahan()" class="text-rose-600">
                                 <span class="text-sm font-medium text-slate-700">Pengeluaran</span>
                             </label>
                         </div>
@@ -104,48 +103,25 @@
                         <input type="date" id="tanggal" required class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 text-sm">
                     </div>
 
-                    <!-- Kategori Pembayaran -->
-                    <div class="mb-4">
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Kategori</label>
-                        <select id="kategori" required class="w-full px-3 py-2 border border-slate-200 rounded-xl bg-white text-sm">
-                            <option value="" disabled selected>Pilih Kategori...</option>
-                            <optgroup label="Pemasukan (Siswa/Pusat)">
-                                <option value="SPP">SPP</option>
-                                <option value="Tabungan">Tabungan</option>
-                                <option value="Daftar Ulang">Daftar Ulang</option>
-                                <option value="PSB">PSB</option>
-                                <option value="PKL">PKL</option>
-                                <option value="STS Ganjil">STS Ganjil</option>
-                                <option value="SAS Ganjil">SAS Ganjil</option>
-                                <option value="STS Genap">STS Genap</option>
-                                <option value="SAS Genap">SAS Genap</option>
-                                <option value="Pengabdian">Pengabdian</option>
-                                <option value="Kunjungan Industri">Kunjungan Industri</option>
-                                <option value="Dana BOS">Dana BOS</option>
-                            </optgroup>
-                            <optgroup label="Pengeluaran">
-                                <option value="Gaji/Honor">Gaji / Honor</option>
-                                <option value="ATK/Operasional">ATK / Operasional</option>
-                                <option value="Perbaikan/Pemeliharaan">Perbaikan / Pemeliharaan</option>
-                            </optgroup>
-                            <optgroup label="Lainnya">
-                                <option value="Lain-lain">Lain-lain</option>
-                            </optgroup>
-                        </select>
+                    <!-- 2. INPUT KATEGORI DINAMIS (AUTO-SUGGEST) -->
+                    <div class="mb-4 relative">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">2. Variabel / Kategori (Bisa Ketik Baru)</label>
+                        <input type="text" id="kategoriInput" required placeholder="Contoh: M.A.1 Pend SPP atau K.E.2 ATK" oninput="pencarianKategoriDinamis(this.value)" onfocus="pencarianKategoriDinamis(this.value)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm font-medium" autocomplete="off">
+                        <!-- Dropdown Suggestion Kategori -->
+                        <div id="boxHasilKategori" class="hidden absolute left-0 right-0 top-[100%] bg-white border border-slate-200 rounded-xl shadow-xl mt-1 max-h-48 overflow-y-auto z-50 divide-y divide-slate-100"></div>
                     </div>
 
-                    <!-- PENCARIAN SISWA CLOUD -->
+                    <!-- 3. NAMA / DETAIL PIHAK (OPSIONAL JIKA PEMASUKAN SISWA) -->
                     <div class="mb-4 relative" id="containerNamaSiswa">
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Cari Nama Siswa / Jurusan</label>
-                        <input type="text" id="cariSiswaInput" placeholder="Ketik nama siswa atau kode jurusan..." oninput="pencarianSiswaDinamis(this.value)" onfocus="pencarianSiswaDinamis(this.value)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" autocomplete="off">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">3. Nama Siswa / Jurusan (Ketik jika ada)</label>
+                        <input type="text" id="cariSiswaInput" placeholder="Ketik nama siswa untuk pencarian..." oninput="pencarianSiswaDinamis(this.value)" onfocus="pencarianSiswaDinamis(this.value)" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm" autocomplete="off">
                         <div id="boxHasilSiswa" class="hidden absolute left-0 right-0 top-[100%] bg-white border border-slate-200 rounded-xl shadow-xl mt-1 max-h-48 overflow-y-auto z-50 divide-y divide-slate-100"></div>
                         <input type="hidden" id="namaSiswaTerpilih">
                     </div>
 
-                    <!-- Input Manual Pengeluaran -->
                     <div class="mb-4 hidden" id="containerNamaManual">
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Nama / Pihak Terkait</label>
-                        <input type="text" id="namaManual" placeholder="Nama instansi / toko / guru" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">3. Nama Pihak / Toko / Guru</label>
+                        <input type="text" id="namaManual" placeholder="Misal: Toko Buku, Pak Fandy, dll" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm">
                     </div>
 
                     <!-- Nominal Uang -->
@@ -155,11 +131,11 @@
                     </div>
                     
                     <div class="mb-5">
-                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Keterangan</label>
-                        <textarea id="keterangan" required rows="2" placeholder="Detail transaksi..." class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm"></textarea>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Uraian / Keterangan Tambahan</label>
+                        <textarea id="keterangan" required rows="2" placeholder="Detail keperluan transaksi..." class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm"></textarea>
                     </div>
 
-                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition text-sm cursor-pointer">🚀 Kirim ke Cloud</button>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 rounded-xl transition text-sm cursor-pointer shadow-md">🚀 Simpan & Simpan Variabel</button>
                 </form>
             </div>
 
@@ -178,14 +154,14 @@
                             <input type="date" id="filterTglSelesai" onchange="filterDataSemua()" class="w-full mt-0.5 px-2 py-1.5 border border-slate-200 rounded-lg text-xs">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase">Kategori</label>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase">Variabel Kategori</label>
                             <select id="filterKategori" onchange="filterDataSemua()" class="w-full mt-0.5 px-2 py-1.5 border border-slate-200 rounded-lg bg-white text-xs">
                                 <option value="SEMUA">-- Semua Kategori --</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold text-slate-400 uppercase">Cari Nama/Siswa</label>
-                            <input type="text" id="filterNama" oninput="filterDataSemua()" placeholder="Ketik nama..." class="w-full mt-0.5 px-2 py-1.5 border border-slate-200 rounded-lg text-xs">
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase">Cari Uraian/Nama</label>
+                            <input type="text" id="filterNama" oninput="filterDataSemua()" placeholder="Ketik keyword..." class="w-full mt-0.5 px-2 py-1.5 border border-slate-200 rounded-lg text-xs">
                         </div>
                     </div>
                 </div>
@@ -195,36 +171,36 @@
                     <div id="areaCetak">
                         <!-- Tampilan Cetak Struk -->
                         <div id="strukTunggalBox" class="hidden print:block p-6 border-2 border-dashed border-slate-400 max-w-sm mx-auto text-sm mb-6">
-                            <div class="text-center font-bold text-lg mb-1">KASIR TATA USAHA SCHOOL</div>
-                            <div class="text-center text-xs mb-4">Bukti Pembayaran Dokumen Resmi</div>
+                            <div class="text-center font-bold text-lg mb-1">KASIR TATA USAHA</div>
+                            <div class="text-center text-xs mb-4">Bukti Transaksi Resmi</div>
                             <hr class="border-dashed mb-3">
                             <div class="grid grid-cols-2 gap-y-1 text-xs">
                                 <div>No. Transaksi:</div><div id="s_id" class="text-right">-</div>
                                 <div>Tanggal:</div><div id="s_tgl" class="text-right">-</div>
                                 <div>Jenis Kas:</div><div id="s_jenis" class="text-right">-</div>
-                                <div>Kategori:</div><div id="s_kat" class="text-right">-</div>
-                                <div>Nama Pihak:</div><div id="s_nama" class="text-right font-bold">-</div>
-                                <div>Keterangan:</div><div id="s_ket" class="text-right">-</div>
+                                <div>Kategori/Kode:</div><div id="s_kat" class="text-right font-bold">-</div>
+                                <div>Pihak Terkait:</div><div id="s_nama" class="text-right">-</div>
+                                <div>Uraian:</div><div id="s_ket" class="text-right">-</div>
                             </div>
                             <hr class="border-dashed my-3">
                             <div class="flex justify-between font-bold">
                                 <span>TOTAL JUMLAH:</span><span id="s_total">Rp 0</span>
                             </div>
                             <hr class="border-dashed my-3">
-                            <div class="text-center text-[10px] italic text-slate-500">Terima kasih atas pembayaran Anda. Simpan bukti ini secara sah.</div>
+                            <div class="text-center text-[10px] italic text-slate-500">Data tersimpan aman di Cloud Sistem.</div>
                         </div>
 
                         <!-- Laporan Utama -->
                         <div id="tabelLaporanUtama">
-                            <h2 class="text-base font-bold text-slate-700 mb-4 border-b border-slate-100 pb-2">Riwayat Pembayaran Keuangan</h2>
+                            <h2 class="text-base font-bold text-slate-700 mb-4 border-b border-slate-100 pb-2">Buku Kas Umum Sekolah (Cloud Realtime)</h2>
                             <div class="overflow-x-auto">
                                 <table class="w-full text-left border-collapse min-w-[700px]">
                                     <thead>
                                         <tr class="bg-slate-50 text-slate-400 text-xs font-semibold border-b border-slate-100 uppercase">
                                             <th class="p-3 w-10 text-center">No</th>
                                             <th class="p-3 w-24">Tanggal</th>
-                                            <th class="p-3 w-28">Kategori</th>
-                                            <th class="p-3">Nama / Keterangan</th>
+                                            <th class="p-3 w-36">Kode / Kategori</th>
+                                            <th class="p-3">Pihak & Uraian Keterangan</th>
                                             <th class="p-3 text-right w-32">Nominal</th>
                                             <th class="p-3 text-center w-36 no-print">Aksi</th>
                                         </tr>
@@ -260,7 +236,7 @@
                 </div>
                 <div class="mb-5">
                     <label class="block text-[11px] font-bold text-slate-500 uppercase mb-1">Kelas & Jurusan</label>
-                    <input type="text" id="m_kelasSiswa" required placeholder="Contoh: X-RPL-2 atau XI-TKR-1" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500">
+                    <input type="text" id="m_kelasSiswa" required placeholder="Contoh: X-RPL-2" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500">
                 </div>
                 <div class="flex gap-2">
                     <button type="button" onclick="tutupModalSiswa()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium py-2.5 rounded-xl text-xs cursor-pointer">Batal</button>
@@ -289,39 +265,41 @@
         const db = getFirestore(app);
         const koleksiTransaksi = collection(db, "transaksi_tu");
         const koleksiMasterSiswa = collection(db, "master_siswa_cloud");
+        const koleksiKategoriAutosave = collection(db, "kategori_autosave");
 
         window.dataMasterCloud = [];
         window.dataFilteredLokal = [];
         window.siswaCloudCache = [];
+        window.kategoriCloudCache = [];
 
         document.getElementById('tanggal').valueAsDate = new Date();
 
-        // LISTEN DATA SISWA DARI FIREBASE
+        // 1. LISTEN DATA SISWA DARI FIREBASE
         onSnapshot(koleksiMasterSiswa, (snapshot) => {
             window.siswaCloudCache = [];
-            snapshot.forEach((doc) => {
-                window.siswaCloudCache.push(doc.data());
-            });
+            snapshot.forEach((doc) => { window.siswaCloudCache.push(doc.data()); });
         });
 
-        // SIMPAN SISWA MANUAL LANGSUNG KE FIREBASE
+        // 2. LISTEN DATA VARIABEL KATEGORI DARI FIREBASE
+        onSnapshot(koleksiKategoriAutosave, (snapshot) => {
+            window.kategoriCloudCache = [];
+            snapshot.forEach((doc) => { window.kategoriCloudCache.push(doc.data()); });
+        });
+
+        // SIMPAN SISWA MANUAL
         window.simpanSiswaManualCloud = async function(e) {
             e.preventDefault();
             const nama = document.getElementById('m_namaSiswa').value.trim();
             const kelas = document.getElementById('m_kelasSiswa').value.trim();
-
             if(!nama || !kelas) return;
-
             try {
                 await addDoc(koleksiMasterSiswa, { "Nama Siswa": nama, "Kelas": kelas });
-                alert(`Sukses menambahkan ${nama} (${kelas}) ke cloud master siswa!`);
+                alert(`Sukses menambahkan ${nama} ke master siswa cloud!`);
                 tutupModalSiswa();
-            } catch (error) {
-                alert("Gagal menambahkan siswa manual: " + error.message);
-            }
+            } catch (error) { alert("Gagal: " + error.message); }
         }
 
-        // PROSES IMPORT EXCEL BATCH
+        // PROSES IMPORT EXCEL SISWA
         window.importDataSiswaKeCloud = function(e) {
             const file = e.target.files[0];
             if(!file) return;
@@ -329,12 +307,9 @@
             reader.onload = async function(evt) {
                 const data = evt.target.result;
                 const workbook = XLSX.read(data, {type: 'binary'});
-                const sheetName = workbook.SheetNames[0];
-                const sheet = workbook.Sheets[sheetName];
-                const jsonSiswa = XLSX.utils.sheet_to_json(sheet);
-                
+                const jsonSiswa = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]);
                 if(jsonSiswa.length > 0 && jsonSiswa[0]["Nama Siswa"]) {
-                    if(confirm(`Kamu akan menimpa database dan mengunggah ${jsonSiswa.length} data siswa baru ke Cloud. Lanjutkan?`)) {
+                    if(confirm(`Unggah ${jsonSiswa.length} data siswa baru?`)) {
                         const snapLama = await getDocs(koleksiMasterSiswa);
                         const batchDelete = writeBatch(db);
                         snapLama.forEach((d) => batchDelete.delete(doc(db, "master_siswa_cloud", d.id)));
@@ -342,70 +317,70 @@
 
                         let batchInsert = writeBatch(db);
                         let counter = 0;
-
                         for(let siswa of jsonSiswa) {
-                            let docRef = doc(koleksiMasterSiswa);
-                            batchInsert.set(docRef, {
-                                "Nama Siswa": siswa["Nama Siswa"],
-                                "Kelas": siswa["Kelas"] || "Umum"
-                            });
+                            batchInsert.set(doc(koleksiMasterSiswa), { "Nama Siswa": siswa["Nama Siswa"], "Kelas": siswa["Kelas"] || "Umum" });
                             counter++;
-                            if(counter === 490) {
-                                await batchInsert.commit();
-                                batchInsert = writeBatch(db);
-                                counter = 0;
-                            }
+                            if(counter === 400) { await batchInsert.commit(); batchInsert = writeBatch(db); counter = 0; }
                         }
                         if(counter > 0) await batchInsert.commit();
-                        alert("Mantap! Semua data siswa berhasil disimpan ke database cloud!");
+                        alert("Berhasil simpan data siswa ke cloud!");
                     }
-                } else { alert("Format template salah. Pastikan ada kolom 'Nama Siswa' dan 'Kelas'."); }
+                } else { alert("Format salah. Harus ada kolom 'Nama Siswa' dan 'Kelas'"); }
             };
             reader.readAsBinaryString(file);
         }
 
-        // KIRIM TRANSAKSI KE FIREBASE
+        // KIRIM TRANSAKSI + AUTO SAVE VARIABEL KATEGORI
         window.tambahDataKeCloud = async function(event) {
             event.preventDefault();
             const jenisKas = document.querySelector('input[name="jenis_kas"]:checked').value;
             const tanggal = document.getElementById('tanggal').value;
-            const kategori = document.getElementById('kategori').value;
+            const kategori = document.getElementById('kategoriInput').value.trim();
             const keterangan = document.getElementById('keterangan').value;
             const rawJumlah = document.getElementById('jumlahDisplay').value.replace(/,/g, '');
             const jumlah = parseFloat(rawJumlah);
 
-            if(isNaN(jumlah) || jumlah <= 0) { alert("Nominal uang tidak valid, bro!"); return; }
+            if(!kategori) { alert("Isi kategori/variabel dulu, bro!"); return; }
+            if(isNaN(jumlah) || jumlah <= 0) { alert("Nominal uang tidak valid!"); return; }
 
             let nama = "";
             if(jenisKas === "Pemasukan") {
-                nama = document.getElementById('namaSiswaTerpilih').value;
-                if(!nama) { alert("Cari dan pilih nama siswa dari hasil pencarian dulu, bro!"); return; }
+                const namaSiswa = document.getElementById('namaSiswaTerpilih').value;
+                nama = namaSiswa ? namaSiswa : document.getElementById('cariSiswaInput').value.trim();
             } else {
-                nama = document.getElementById('namaManual').value;
-                if(!nama) { alert("Isi nama pihak terkait dulu, bro!"); return; }
+                nama = document.getElementById('namaManual').value.trim();
             }
+            if(!nama) nama = "-";
 
             try {
+                // 1. Simpan Transaksi Utama
                 await addDoc(koleksiTransaksi, {
                     jenisKas, tanggal, kategori, nama, jumlah, keterangan, waktuInput: new Date().getTime()
                 });
+
+                // 2. Cek Apakah Kategori Ini Sudah Pernah Ada Di Cloud? Jika Belum, Auto-Save!
+                const cekKategoriAda = window.kategoriCloudCache.some(k => k.namaKategori.toLowerCase() === kategori.toLowerCase() && k.jenisKas === jenisKas);
+                if(!cekKategoriAda) {
+                    await addDoc(koleksiKategoriAutosave, { namaKategori: kategori, jenisKas: jenisKas });
+                }
+
+                // Reset Form Input
                 document.getElementById('jumlahDisplay').value = '';
                 document.getElementById('keterangan').value = '';
                 document.getElementById('namaManual').value = '';
                 document.getElementById('cariSiswaInput').value = '';
                 document.getElementById('namaSiswaTerpilih').value = '';
-                document.getElementById('kategori').selectedIndex = 0;
+                document.getElementById('kategoriInput').value = '';
             } catch (e) { alert("Gagal kirim data: " + e.message); }
         }
 
-        // SNAPSHOT LISTENER TRANSAKSI
+        // SNAPSHOT LISTENER TRANSAKSI UTAMA
         const q = query(koleksiTransaksi, orderBy("tanggal", "desc"), orderBy("waktuInput", "desc"));
         onSnapshot(q, (snapshot) => {
             window.dataMasterCloud = [];
             let setKategori = new Set();
             snapshot.forEach((doc) => {
-                let d = doc.data();
-                d.id = doc.id;
+                let d = doc.data(); d.id = doc.id;
                 window.dataMasterCloud.push(d);
                 setKategori.add(d.kategori);
             });
@@ -416,13 +391,13 @@
         });
 
         window.hapusSatuTransaksi = async function(idDocument, namaTerhapus) {
-            if(confirm(`Apakah kamu yakin ingin menghapus transaksi atas nama "${namaTerhapus}" dari cloud?`)) {
-                try { await deleteDoc(doc(db, "transaksi_tu", idDocument)); } catch(e) { alert("Gagal hapus: " + e.message); }
+            if(confirm(`Hapus transaksi "${namaTerhapus}" dari cloud?`)) {
+                try { await deleteDoc(doc(db, "transaksi_tu", idDocument)); } catch(e) { alert("Gagal: " + e.message); }
             }
         }
 
         window.hapusSemuaData = async function() {
-            if(confirm("Hapus seluruh data transaksi cloud permanen?")) {
+            if(confirm("Hapus seluruh data transaksi cloud secara permanen?")) {
                 const snap = await getDocs(koleksiTransaksi);
                 snap.forEach(async (d) => await deleteDoc(doc(db, "transaksi_tu", d.id)));
             }
@@ -431,43 +406,71 @@
 
     <!-- INTERAKSI FRONTEND -->
     <script>
-        // Fungsi Modal Manajeman Siswa Manual
         function bukaModalSiswa() {
             document.getElementById('m_namaSiswa').value = "";
             document.getElementById('m_kelasSiswa').value = "";
             document.getElementById('modalSiswaManual').classList.remove('hidden');
         }
-        function tutupModalSiswa() {
-            document.getElementById('modalSiswaManual').classList.add('hidden');
-        }
+        function tutupModalSiswa() { document.getElementById('modalSiswaManual').classList.add('hidden'); }
 
+        // Tutup dropdown otomatis jika klik di luar area input
         document.addEventListener('click', function(e) {
-            if (!document.getElementById('containerNamaSiswa').contains(e.target)) {
+            if (!e.target.closest('#containerNamaSiswa') && !e.target.closest('#kategoriInput')) {
                 document.getElementById('boxHasilSiswa').classList.add('hidden');
+                document.getElementById('boxHasilKategori').classList.add('hidden');
             }
         });
 
+        // SUGGESTION VARIABEL KATEGORI (BERDASARKAN PILIHAN PAS PEMASUKAN / PENGELUARAN)
+        function pencarianKategoriDinamis(keyword) {
+            const box = document.getElementById('boxHasilKategori');
+            const jenisKasAktif = document.querySelector('input[name="jenis_kas"]:checked').value;
+            const listKategori = window.kategoriCloudCache || [];
+            
+            // Filter kategori yang tipenya sama dengan jenis kas yang sedang dipilih
+            const listSesuaiJenis = listKategori.filter(k => k.jenisKas === jenisKasAktif);
+            
+            if(listSesuaiJenis.length === 0) { box.classList.add('hidden'); return; }
+
+            const key = keyword.toLowerCase().trim();
+            const hasilFilter = listSesuaiJenis.filter(k => k.namaKategori.toLowerCase().includes(key));
+
+            if(hasilFilter.length === 0) { box.classList.add('hidden'); return; }
+
+            let htmlOptions = "";
+            hasilFilter.slice(0, 10).forEach(k => {
+                htmlOptions += `
+                    <div onclick="pilihKategoriDariBox('${k.namaKategori}')" class="p-2.5 text-xs sm:text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer transition font-medium">
+                        📂 ${k.namaKategori}
+                    </div>
+                `;
+            });
+            box.innerHTML = htmlOptions;
+            box.classList.remove('hidden');
+        }
+
+        function pilihKategoriDariBox(nilai) {
+            document.getElementById('kategoriInput').value = nilai;
+            document.getElementById('boxHasilKategori').classList.add('hidden');
+        }
+
+        // PENCARIAN SISWA DINAMIS
         function pencarianSiswaDinamis(keyword) {
             const box = document.getElementById('boxHasilSiswa');
             const listSiswa = window.siswaCloudCache || [];
-            if(listSiswa.length === 0) {
-                box.innerHTML = `<div class="p-3 text-xs text-rose-500 italic">Database kosong. Silakan upload excel siswa atau klik tombol Tambah Siswa Manual!</div>`;
-                box.classList.remove('hidden');
-                return;
-            }
+            if(listSiswa.length === 0) { box.classList.add('hidden'); return; }
+            
             const key = keyword.toLowerCase().trim();
             const hasilFilter = listSiswa.filter(s => {
                 const nama = s["Nama Siswa"] ? s["Nama Siswa"].toString().toLowerCase() : "";
                 const kelas = s["Kelas"] ? s["Kelas"].toString().toLowerCase() : "";
                 return nama.includes(key) || kelas.includes(key);
             });
-            if(hasilFilter.length === 0) {
-                box.innerHTML = `<div class="p-3 text-xs text-slate-400 italic">Siswa atau Jurusan tidak ditemukan...</div>`;
-                box.classList.remove('hidden');
-                return;
-            }
+
+            if(hasilFilter.length === 0) { box.classList.add('hidden'); return; }
+            
             let htmlOptions = "";
-            hasilFilter.slice(0, 15).forEach(s => {  
+            hasilFilter.slice(0, 10).forEach(s => {  
                 let teksLengkap = `${s["Nama Siswa"]} (${s["Kelas"]})`;
                 htmlOptions += `
                     <div onclick="pilihSiswaDariBox('${teksLengkap}')" class="p-2.5 text-xs sm:text-sm text-slate-700 hover:bg-indigo-50 hover:text-indigo-600 cursor-pointer transition font-medium">
@@ -491,6 +494,20 @@
             else input.value = "";
         }
 
+        function handleAlurPerubahan() {
+            const jenis = document.querySelector('input[name="jenis_kas"]:checked').value;
+            // Reset input kategori saat alur ganti agar tidak salah masuk variabel
+            document.getElementById('kategoriInput').value = "";
+            
+            if(jenis === "Pemasukan") {
+                document.getElementById('containerNamaSiswa').classList.remove('hidden');
+                document.getElementById('containerNamaManual').classList.add('hidden');
+            } else {
+                document.getElementById('containerNamaSiswa').classList.add('hidden');
+                document.getElementById('containerNamaManual').classList.remove('hidden');
+            }
+        }
+
         function prosesLogin(e){
             e.preventDefault();
             if(document.getElementById('username').value === "eka" && document.getElementById('password').value === "tatausaha123"){
@@ -503,23 +520,8 @@
             document.getElementById('halamanLogin').classList.remove('hidden');
         }
 
-        function toggleInputNama() {
-            const jenis = document.querySelector('input[name="jenis_kas"]:checked').value;
-            if(jenis === "Pemasukan") {
-                document.getElementById('containerNamaSiswa').classList.remove('hidden');
-                document.getElementById('containerNamaManual').classList.add('hidden');
-            } else {
-                document.getElementById('containerNamaSiswa').classList.add('hidden');
-                document.getElementById('containerNamaManual').classList.remove('hidden');
-            }
-        }
-
         function downloadTemplateSiswa() {
-            const dataDummy = [
-                {"Nama Siswa": "Andi Wijaya", "Kelas": "X-RPL-1"},
-                {"Nama Siswa": "Budi Santoso", "Kelas": "XI-TKJ-2"},
-                {"Nama Siswa": "Siti Aminah", "Kelas": "XII-AKL-1"}
-            ];
+            const dataDummy = [{"Nama Siswa": "Andi Wijaya", "Kelas": "X-RPL-1"}];
             const ws = XLSX.utils.json_to_sheet(dataDummy);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Master Siswa");
@@ -541,7 +543,7 @@
                 if(tglMulai && d.tanggal < tglMulai) return;
                 if(tglSelesai && d.tanggal > tglSelesai) return;
                 if(kat !== "SEMUA" && d.kategori !== kat) return;
-                if(cariNama && !d.nama.toLowerCase().includes(cariNama)) return;
+                if(cariNama && !d.nama.toLowerCase().includes(cariNama) && !d.keterangan.toLowerCase().includes(cariNama)) return;
 
                 if(d.jenisKas === "Pemasukan") totalPemasukan += d.jumlah;
                 else totalPengeluaran += d.jumlah;
@@ -552,9 +554,9 @@
                     <tr class="hover:bg-slate-50 transition">
                         <td class="p-3 text-center text-slate-400 font-medium">${idx}</td>
                         <td class="p-3 text-slate-500 font-medium whitespace-nowrap">${d.tanggal}</td>
-                        <td class="p-3"><span class="px-2 py-0.5 rounded text-xs font-medium ${d.jenisKas==='Pemasukan'?'bg-emerald-50 text-emerald-700':'bg-rose-50 text-rose-700'}">${d.kategori}</span></td>
+                        <td class="p-3"><span class="px-2 py-0.5 rounded text-xs font-semibold ${d.jenisKas==='Pemasukan'?'bg-emerald-50 text-emerald-700':'bg-rose-50 text-rose-700'}">${d.kategori}</span></td>
                         <td class="p-3">
-                            <div class="font-semibold text-slate-800">${d.nama}</div>
+                            <div class="font-bold text-slate-800">${d.nama}</div>
                             <div class="text-xs text-slate-400 mt-0.5">${d.keterangan}</div>
                         </td>
                         <td class="p-3 text-right font-bold ${d.jenisKas==='Pemasukan'?'text-emerald-600':'text-rose-600'}">
@@ -578,12 +580,12 @@
         function eksporExcelFiltered() {
             if(window.dataFilteredLokal.length === 0) { alert("Tidak ada data untuk diekspor!"); return; }
             let dataFormat = window.dataFilteredLokal.map((d, i) => ({
-                "No": i+1, "Tanggal": d.tanggal, "Arus Kas": d.jenisKas, "Kategori": d.kategori, "Nama/Siswa": d.nama, "Nominal (Rp)": d.jumlah, "Keterangan": d.keterangan
+                "No": i+1, "Tanggal": d.tanggal, "Arus Kas": d.jenisKas, "Kode/Kategori": d.kategori, "Pihak Terkait": d.nama, "Nominal (Rp)": d.jumlah, "Keterangan/Uraian": d.keterangan
             }));
             const ws = XLSX.utils.json_to_sheet(dataFormat);
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Laporan Terfilter");
-            XLSX.writeFile(wb, "Laporan_Keuangan_Filtered.xlsx");
+            XLSX.utils.book_append_sheet(wb, ws, "Buku Kas Terfilter");
+            XLSX.writeFile(wb, "Buku_Kas_TU_Filtered.xlsx");
         }
 
         function cetakLaporanLengkap() {
