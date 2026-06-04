@@ -625,6 +625,7 @@
             const data = window.dataMasterCloud.find(d => d.id === idDocument);
             if(!data) { alert("Data transaksi tidak ditemukan!"); return; }
             
+            // 1. Masukkan data ke template struk
             document.getElementById('s_id').innerText = data.id.substring(0,8).toUpperCase();
             document.getElementById('s_tgl').innerText = data.tanggal;
             document.getElementById('s_jenis').innerText = data.jenisKas;
@@ -633,18 +634,37 @@
             document.getElementById('s_ket').innerText = data.keterangan;
             document.getElementById('s_total').innerText = `Rp ${data.jumlah.toLocaleString('id-ID')}`;
             
-            const tabelUtama = document.getElementById('tabelLaporanUtama');
+            // 2. AMANKAN STRUKTUR CSS PRINT: Pindahkan box struk ke elemen paling luar (body) agar tidak tersembunyi
             const strukBox = document.getElementById('strukTunggalBox');
+            const mainLayout = document.querySelector('div.flex.min-h-screen'); // Mengambil container utama dashboard lo
             
-            if(tabelUtama) tabelUtama.classList.add('print:hidden');
-            if(strukBox) {
+            if(strukBox && mainLayout) {
+                // Sembunyikan dashboard utama total saat cetak
+                mainLayout.classList.add('print:hidden', 'hidden'); 
+                // Paksa kotak struk keluar dari nesting dan tampil sendirian
                 strukBox.classList.remove('hidden');
-                strukBox.classList.add('print:block');
+                strukBox.classList.add('print:block', 'block');
+                
+                // Pindahkan sementara ke elemen body paling atas biar dibaca browser
+                document.body.insertBefore(strukBox, document.body.firstChild);
             }
             
+            // 3. Jalankan perintah cetak printer
             window.print();
+            
+            // 4. OTOMATIS DIKEMBALIKAN: Setelah user klik 'Print' atau 'Cancel', kembalikan layout seperti semula
+            setTimeout(() => {
+                if(strukBox && mainLayout) {
+                    mainLayout.classList.remove('print:hidden', 'hidden');
+                    strukBox.classList.add('hidden');
+                    strukBox.classList.remove('print:block', 'block');
+                    // Kembalikan box struk ke tempat asalnya di dalam layout laporan
+                    const areaLaporan = document.getElementById('menuLaporanBukuKas') || mainLayout;
+                    areaLaporan.appendChild(strukBox);
+                }
+            }, 1000);
         };
-
+        
         window.hapusSatuTransaksi = async function(idDocument, namaTerhapus) {
             if(confirm(`Hapus transaksi "${namaTerhapus}"?`)) await deleteDoc(doc(db, "transaksi_tu", idDocument));
         };
