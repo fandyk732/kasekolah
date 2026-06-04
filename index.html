@@ -13,6 +13,29 @@
             #areaCetak { position: absolute; left: 0; top: 0; width: 100%; }
             .no-print { display: none; }
         }
+        /* ========================================================
+           CSS MODERASI PRINTER: BIAR STRUK LIVE & LAPORAN AMAN 
+        ======================================================== */
+        @media print {
+            /* Jika sedang cetak struk tunggal, sembunyikan SEMUA elemen kecuali box struk itu sendiri */
+            body.sedang-cetak-struk div.flex.min-h-screen, 
+            body.sedang-cetak-struk #tabelLaporanUtama,
+            body.sedang-cetak-struk section, 
+            body.sedang-cetak-struk aside {
+                display: none !important;
+            }
+            
+            /* Paksa box struk muncul sendirian di tengah kertas */
+            body.sedang-cetak-struk #strukTunggalBox {
+                display: block !important;
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                margin: 0;
+                padding: 0;
+            }
+        }
     </style>
 </head>
 <body class="bg-slate-50 font-sans min-h-screen text-slate-800">
@@ -625,7 +648,7 @@
             const data = window.dataMasterCloud.find(d => d.id === idDocument);
             if(!data) { alert("Data transaksi tidak ditemukan!"); return; }
             
-            // 1. Masukkan data ke template struk
+            // 1. Masukkan data ke template struk seperti biasa
             document.getElementById('s_id').innerText = data.id.substring(0,8).toUpperCase();
             document.getElementById('s_tgl').innerText = data.tanggal;
             document.getElementById('s_jenis').innerText = data.jenisKas;
@@ -634,35 +657,16 @@
             document.getElementById('s_ket').innerText = data.keterangan;
             document.getElementById('s_total').innerText = `Rp ${data.jumlah.toLocaleString('id-ID')}`;
             
-            // 2. AMANKAN STRUKTUR CSS PRINT: Pindahkan box struk ke elemen paling luar (body) agar tidak tersembunyi
-            const strukBox = document.getElementById('strukTunggalBox');
-            const mainLayout = document.querySelector('div.flex.min-h-screen'); // Mengambil container utama dashboard lo
+            // 2. Beri tanda khusus di body bahwa kita sedang mencetak struk tunggal
+            document.body.classList.add('sedang-cetak-struk');
             
-            if(strukBox && mainLayout) {
-                // Sembunyikan dashboard utama total saat cetak
-                mainLayout.classList.add('print:hidden', 'hidden'); 
-                // Paksa kotak struk keluar dari nesting dan tampil sendirian
-                strukBox.classList.remove('hidden');
-                strukBox.classList.add('print:block', 'block');
-                
-                // Pindahkan sementara ke elemen body paling atas biar dibaca browser
-                document.body.insertBefore(strukBox, document.body.firstChild);
-            }
-            
-            // 3. Jalankan perintah cetak printer
+            // 3. Langsung cetak
             window.print();
             
-            // 4. OTOMATIS DIKEMBALIKAN: Setelah user klik 'Print' atau 'Cancel', kembalikan layout seperti semula
+            // 4. Setelah beres, hapus tandanya (tanpa merusak halaman / tanpa logout)
             setTimeout(() => {
-                if(strukBox && mainLayout) {
-                    mainLayout.classList.remove('print:hidden', 'hidden');
-                    strukBox.classList.add('hidden');
-                    strukBox.classList.remove('print:block', 'block');
-                    // Kembalikan box struk ke tempat asalnya di dalam layout laporan
-                    const areaLaporan = document.getElementById('menuLaporanBukuKas') || mainLayout;
-                    areaLaporan.appendChild(strukBox);
-                }
-            }, 1000);
+                document.body.classList.remove('sedang-cetak-struk');
+            }, 500);
         };
         
         window.hapusSatuTransaksi = async function(idDocument, namaTerhapus) {
