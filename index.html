@@ -63,15 +63,14 @@
 
     <div id="halamanDashboard" class="hidden flex min-h-screen">
         
-        <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col justify-between p-5 border-r border-slate-800 shrink-0 no-print">
-            <div>
-                <div class="flex items-center gap-3 pb-6 mb-6 border-b border-slate-800">
-                    <div class="bg-indigo-600 text-white p-2 rounded-xl text-lg">🏫</div>
-                    <div>
-                        <h2 class="text-sm font-bold text-white tracking-wide">Kasir TU Cloud</h2>
-                        <span class="text-[10px] text-slate-500 font-medium">Sistem Dashboard v7.5</span>
-                    </div>
-                </div>
+       <aside id="sidebarAplikasi" class="w-64 bg-slate-900 text-slate-300 min-h-screen p-4 flex flex-col justify-between fixed lg:static z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300">
+    
+    <div class="lg:hidden mt-4">
+        <button type="button" onclick="toggleSidebarMobile()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded text-xs font-bold cursor-pointer">
+            ✕ Tutup Menu
+        </button>
+    </div>
+</aside>
 
                 <nav class="space-y-1">
                     <button onclick="pindahMenu('transaksi')" id="btn-menu-transaksi" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition duration-150 cursor-pointer bg-indigo-600 text-white">
@@ -104,6 +103,17 @@
             
             <div id="sub-transaksi" class="space-y-6">
                 <div>
+                    <div class="p-4 bg-slate-900 text-white flex items-center justify-between lg:hidden shadow">
+    <div class="flex items-center gap-2">
+        <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-between p-2">
+            <span class="text-white text-xs font-black">K</span>
+        </div>
+        <span class="font-bold text-sm">Kasir TU Cloud</span>
+    </div>
+    <button type="button" onclick="toggleSidebarMobile()" class="p-2 text-slate-200 hover:text-white text-xl focus:outline-none cursor-pointer">
+        ☰
+    </button>
+</div>
                     <h1 class="text-xl font-bold text-slate-800">Menu Transaksi Utama</h1>
                     <p class="text-xs text-slate-400 mt-0.5">Input data kas masuk/keluar dan cetak struk real-time</p>
                 </div>
@@ -880,6 +890,22 @@
                 document.getElementById('boxHasilSiswa').classList.add('hidden');
                 document.getElementById('boxHasilKategori').classList.add('hidden');
             }
+        });
+        // FUNGSI BUKA TUTUP SIDEBAR DI HP
+        window.toggleSidebarMobile = function() {
+            const sidebar = document.getElementById('sidebarAplikasi');
+            if (sidebar) {
+                sidebar.classList.toggle('-translate-x-full');
+            }
+        };
+
+        // Otomatis tutup sidebar di HP kalau menu navigasi diklik
+        document.querySelectorAll('aside button, aside a').forEach(el => {
+            el.addEventListener('click', () => {
+                if (window.innerWidth < 1024) {
+                    document.getElementById('sidebarAplikasi').classList.add('-translate-x-full');
+                }
+            });
         });
     </script>
 </body>
