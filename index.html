@@ -580,7 +580,7 @@
         });
 
         // POPULASI SISI KANAN MENU TRANSAKSI (LIVE ACTIVITY 5 DATA TERAKHIR)
-        function updateLiveActivityDashboard() {
+       function updateLiveActivityDashboard() {
             const hariIni = new Date().toISOString().split('T')[0];
             let masuk = 0, keluar = 0, totalKas = 0;
             
@@ -596,6 +596,31 @@
                 }
             });
 
+            dataTerbaru.forEach(d => {
+                if(counter >= 5) return; // batasi hanya tampil 5 data
+                // PERBAIKAN: Bungkus d.id dengan quotes agar dilempar sebagai string murni yang aman
+                htmlLive += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-2">
+                            <div class="font-bold text-slate-800 text-[11px]">${d.nama}</div>
+                            <div class="text-[10px] text-slate-400 font-medium">${d.tanggal} • ${d.kategori}</div>
+                        </td>
+                        <td class="p-2 text-right font-bold text-[11px] ${d.jenisKas === 'Pemasukan' ? 'text-emerald-600' : 'text-rose-600'}">
+                            ${d.jenisKas === 'Pemasukan' ? '+' : '-'} Rp ${d.jumlah.toLocaleString('id-ID')}
+                        </td>
+                        <td class="p-2 text-center">
+                            <button type="button" onclick="cetakStrukLangsungDariLive('${d.id}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">🖨️ Struk</button>
+                        </td>
+                    </tr>
+                `;
+                counter++;
+            });
+
+            document.getElementById('liveTransaksiBody').innerHTML = htmlLive || `<tr><td colspan="3" class="p-4 text-center italic text-slate-400">Belum ada transaksi.</td></tr>`;
+            document.getElementById('widgetMiniMasuk').innerText = `Rp ${masuk.toLocaleString('id-ID')}`;
+            document.getElementById('widgetMiniKeluar').innerText = `Rp ${keluar.toLocaleString('id-ID')}`;
+            document.getElementById('widgetMiniSaldo').innerText = `Rp ${totalKas.toLocaleString('id-ID')}`;
+        }
             dataTerbaru.forEach(d => {
                 if(counter >= 5) return; // batasi hanya tampil 5 data
                 htmlLive += `
@@ -623,7 +648,9 @@
 
         window.cetakStrukLangsungDariLive = function(idDocument) {
             const data = window.dataMasterCloud.find(d => d.id === idDocument);
-            if(!data) return;
+            if(!data) { alert("Data transaksi tidak ditemukan!"); return; }
+            
+            // Isi data ke template struk
             document.getElementById('s_id').innerText = data.id.substring(0,8).toUpperCase();
             document.getElementById('s_tgl').innerText = data.tanggal;
             document.getElementById('s_jenis').innerText = data.jenisKas;
@@ -631,8 +658,18 @@
             document.getElementById('s_nama').innerText = data.nama;
             document.getElementById('s_ket').innerText = data.keterangan;
             document.getElementById('s_total').innerText = `Rp ${data.jumlah.toLocaleString('id-ID')}`;
-            document.getElementById('tabelLaporanUtama').classList.add('print:hidden');
-            document.getElementById('strukTunggalBox').classList.remove('hidden');
+            
+            // PERBAIKAN BERSAMA: Pastikan container struk dipaksa muncul di layar cetak, dan tabel disembunyikan sementara
+            const tabelUtama = document.getElementById('tabelLaporanUtama');
+            const strukBox = document.getElementById('strukTunggalBox');
+            
+            if(tabelUtama) tabelUtama.classList.add('print:hidden');
+            if(strukBox) {
+                strukBox.classList.remove('hidden');
+                strukBox.classList.add('print:block');
+            }
+            
+            // Jalankan perintah cetak printer
             window.print();
         }
 
