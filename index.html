@@ -398,7 +398,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, getDocs, deleteDoc, doc, writeBatch, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-       // ⚠️ CONFIG FIREBASE KAMU
+        // ⚠️ MASUKKAN CONFIG FIREBASE ASLI LO DI SINI BRO!
         const firebaseConfig = {
             apiKey: "AIzaSyA123456789-ContohKeySaja",
             authDomain: "kasir-tu.firebaseapp.com",
@@ -444,13 +444,13 @@
             document.getElementById('crudBodySiswa').innerHTML = html || `<tr><td colspan="3" class="p-4 text-center text-slate-400 italic">Tidak ada master siswa.</td></tr>`;
         });
 
-        // 2. REAL-TIME MASTER VARIABEL KATEGORI (FIXED BUG INDEX LOADING DATA)
+        // 2. REAL-TIME MASTER VARIABEL KATEGORI
         onSnapshot(koleksiKategoriAutosave, (snapshot) => {
             window.kategoriCloudCache = [];
             let html = "";
             snapshot.forEach((docSnap) => { 
                 let k = docSnap.data();
-                k.id = docSnap.id; // Menyimpan id dokumen asli
+                k.id = docSnap.id;
                 window.kategoriCloudCache.push(k);
 
                 html += `
@@ -474,17 +474,17 @@
             if(namaBaru && kelasBaru) {
                 await updateDoc(doc(db, "master_siswa_cloud", id), { "Nama Siswa": namaBaru.trim(), "Kelas": kelasBaru.trim() });
             }
-        }
+        };
         window.hapusSiswaCloud = async function(id) {
             if(confirm("Hapus siswa ini dari cloud?")) await deleteDoc(doc(db, "master_siswa_cloud", id));
-        }
+        };
         window.editVariabelCloud = async function(id, namaLama) {
             const namaBaru = prompt("Ubah Nama Variabel Kategori:", namaLama);
             if(namaBaru) await updateDoc(doc(db, "kategori_autosave", id), { namaKategori: namaBaru.trim() });
-        }
+        };
         window.hapusVariabelCloud = async function(id) {
             if(confirm("Hapus variabel kategori ini?")) await deleteDoc(doc(db, "kategori_autosave", id));
-        }
+        };
 
         window.simpanSiswaManualCloud = async function(e) {
             e.preventDefault();
@@ -496,7 +496,7 @@
                 alert(`Sukses menambahkan ${nama}!`);
                 tutupModalSiswa();
             } catch (error) { alert("Gagal: " + error.message); }
-        }
+        };
 
         window.importExcelKolektif = function(e, tipeGrup) {
             const file = e.target.files[0];
@@ -527,7 +527,7 @@
                 }
             };
             reader.readAsBinaryString(file);
-        }
+        };
 
         // SIMPAN DATA TRANSAKSI
         window.tambahDataKeCloud = async function(event) {
@@ -559,9 +559,9 @@
                 document.getElementById('kategoriInput').value = '';
                 alert("Transaksi berhasil disimpan!");
             } catch (e) { alert("Gagal kirim data: " + e.message); }
-        }
+        };
 
-        // QUERY TRANSAKSI UTAMA (DENGAN RE-INDEXING BERDASARKAN KRITERIA URUTAN TANGGAL)
+        // QUERY TRANSAKSI UTAMA (MENGGUNAKAN COMPOSITE INDEX)
         const q = query(koleksiTransaksi, orderBy("tanggal", "asc"), orderBy("waktuInput", "asc"));
         onSnapshot(q, (snapshot) => {
             window.dataMasterCloud = [];
@@ -576,15 +576,14 @@
             setKategori.forEach(k => { fKat.innerHTML += `<option value="${k}">${k}</option>`; });
             
             window.filterDataSemua();
-            updateLiveActivityDashboard();
+            window.updateLiveActivityDashboard();
         });
 
         // POPULASI SISI KANAN MENU TRANSAKSI (LIVE ACTIVITY 5 DATA TERAKHIR)
-       function updateLiveActivityDashboard() {
+        window.updateLiveActivityDashboard = function() {
             const hariIni = new Date().toISOString().split('T')[0];
             let masuk = 0, keluar = 0, totalKas = 0;
             
-            // Urutkan terbalik khusus untuk keperluan live view (data terbaru paling atas)
             const dataTerbaru = [...window.dataMasterCloud].reverse();
             let htmlLive = "";
             let counter = 0;
@@ -597,8 +596,7 @@
             });
 
             dataTerbaru.forEach(d => {
-                if(counter >= 5) return; // batasi hanya tampil 5 data
-                // PERBAIKAN: Bungkus d.id dengan quotes agar dilempar sebagai string murni yang aman
+                if(counter >= 5) return;
                 htmlLive += `
                     <tr class="hover:bg-slate-50 transition">
                         <td class="p-2">
@@ -620,37 +618,12 @@
             document.getElementById('widgetMiniMasuk').innerText = `Rp ${masuk.toLocaleString('id-ID')}`;
             document.getElementById('widgetMiniKeluar').innerText = `Rp ${keluar.toLocaleString('id-ID')}`;
             document.getElementById('widgetMiniSaldo').innerText = `Rp ${totalKas.toLocaleString('id-ID')}`;
-        }
-            dataTerbaru.forEach(d => {
-                if(counter >= 5) return; // batasi hanya tampil 5 data
-                htmlLive += `
-                    <tr class="hover:bg-slate-50 transition">
-                        <td class="p-2">
-                            <div class="font-bold text-slate-800 text-[11px]">${d.nama}</div>
-                            <div class="text-[10px] text-slate-400 font-medium">${d.tanggal} • ${d.kategori}</div>
-                        </td>
-                        <td class="p-2 text-right font-bold text-[11px] ${d.jenisKas === 'Pemasukan' ? 'text-emerald-600' : 'text-rose-600'}">
-                            ${d.jenisKas === 'Pemasukan' ? '+' : '-'} Rp ${d.jumlah.toLocaleString('id-ID')}
-                        </td>
-                        <td class="p-2 text-center">
-                            <button onclick="cetakStrukLangsungDariLive('${d.id}')" class="bg-indigo-50 text-indigo-600 hover:bg-indigo-600 hover:text-white transition px-1.5 py-0.5 rounded text-[10px] font-bold cursor-pointer">🖨️ Struk</button>
-                        </td>
-                    </tr>
-                `;
-                counter++;
-            });
-
-            document.getElementById('liveTransaksiBody').innerHTML = htmlLive || `<tr><td colspan="3" class="p-4 text-center italic text-slate-400">Belum ada transaksi.</td></tr>`;
-            document.getElementById('widgetMiniMasuk').innerText = `Rp ${masuk.toLocaleString('id-ID')}`;
-            document.getElementById('widgetMiniKeluar').innerText = `Rp ${keluar.toLocaleString('id-ID')}`;
-            document.getElementById('widgetMiniSaldo').innerText = `Rp ${totalKas.toLocaleString('id-ID')}`;
-        }
+        };
 
         window.cetakStrukLangsungDariLive = function(idDocument) {
             const data = window.dataMasterCloud.find(d => d.id === idDocument);
             if(!data) { alert("Data transaksi tidak ditemukan!"); return; }
             
-            // Isi data ke template struk
             document.getElementById('s_id').innerText = data.id.substring(0,8).toUpperCase();
             document.getElementById('s_tgl').innerText = data.tanggal;
             document.getElementById('s_jenis').innerText = data.jenisKas;
@@ -659,7 +632,6 @@
             document.getElementById('s_ket').innerText = data.keterangan;
             document.getElementById('s_total').innerText = `Rp ${data.jumlah.toLocaleString('id-ID')}`;
             
-            // PERBAIKAN BERSAMA: Pastikan container struk dipaksa muncul di layar cetak, dan tabel disembunyikan sementara
             const tabelUtama = document.getElementById('tabelLaporanUtama');
             const strukBox = document.getElementById('strukTunggalBox');
             
@@ -669,23 +641,20 @@
                 strukBox.classList.add('print:block');
             }
             
-            // Jalankan perintah cetak printer
             window.print();
-        }
+        };
 
         window.hapusSatuTransaksi = async function(idDocument, namaTerhapus) {
             if(confirm(`Hapus transaksi "${namaTerhapus}"?`)) await deleteDoc(doc(db, "transaksi_tu", idDocument));
-        }
+        };
 
         window.hapusSemuaData = async function() {
             if(confirm("Hapus seluruh data transaksi dari cloud secara permanen?")) {
                 const snap = await getDocs(koleksiTransaksi);
                 snap.forEach(async (d) => await deleteDoc(doc(db, "transaksi_tu", d.id)));
             }
-        }
-    </script>
-
-    <script>
+        };
+    </script>    <script>
         function pindahMenu(namaMenu) {
             document.getElementById('sub-transaksi').classList.add('hidden');
             document.getElementById('sub-editdata').classList.add('hidden');
