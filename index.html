@@ -881,6 +881,32 @@
         function bukaModalSiswa() { document.getElementById('modalSiswa').classList.remove('hidden'); }
         function tutupModalSiswa() { document.getElementById('modalSiswa').classList.add('hidden'); }
         gantiModeKas('Pemasukan');
+
+        // 🟢 FUNGSI BARU: DOWNLOAD SEMUA DATA SISWA DARI DATABASE CLOUD
+        window.unduhDataSiswaCloud = function() {
+            // Validasi jika data di database masih kosong
+            if (!window.siswaCloudCache || window.siswaCloudCache.length === 0) {
+                alert("Gak ada data siswa di database cloud yang bisa didownload, bro!");
+                return;
+            }
+
+            // Memetakan struktur data agar rapi saat dibuka di Microsoft Excel
+            let dataExcelSiswa = window.siswaCloudCache.map((s, index) => ({
+                "No": index + 1,
+                "ID Cloud": s.id,
+                "Nama Siswa": s["Nama Siswa"] ? s["Nama Siswa"].toUpperCase() : "-",
+                "Kelas": s["Kelas"] ? s["Kelas"].toUpperCase() : "-"
+            }));
+
+            // Proses pembuatan file Excel menggunakan library SheetJS
+            const worksheet = XLSX.utils.json_to_sheet(dataExcelSiswa);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Master Siswa");
+
+            // Mengunduh file otomatis ke komputer/HP admin
+            const tanggalHariIni = new Date().toISOString().split('T')[0];
+            XLSX.writeFile(workbook, `Master_Siswa_Cloud_${tanggalHariIni}.xlsx`);
+        };
     </script>
 </body>
 </html>
