@@ -883,14 +883,14 @@
         gantiModeKas('Pemasukan');
 
         // 🟢 FUNGSI BARU: DOWNLOAD SEMUA DATA SISWA DARI DATABASE CLOUD
-        window.unduhDataSiswaCloud = function() {
-            // Validasi jika data di database masih kosong
+       window.unduhDataSiswaCloud = function() {
+            // FIX: Tambahkan predikat 'window.' di depan siswaCloudCache agar terbaca dari modul Firebase
             if (!window.siswaCloudCache || window.siswaCloudCache.length === 0) {
                 alert("Gak ada data siswa di database cloud yang bisa didownload, bro!");
                 return;
             }
 
-            // Memetakan struktur data agar rapi saat dibuka di Microsoft Excel
+            // FIX: Map data juga harus mengambil dari window.siswaCloudCache
             let dataExcelSiswa = window.siswaCloudCache.map((s, index) => ({
                 "No": index + 1,
                 "ID Cloud": s.id,
