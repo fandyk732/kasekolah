@@ -848,7 +848,21 @@
                 `;
             });
             htmlPrint += `</tbody></table>`;
-            document.getElementById('areaCetak').innerHTML = htmlPrint; window.print();
+            
+            const areaCetak = document.getElementById('areaCetak');
+            areaCetak.innerHTML = htmlPrint;
+            
+            // 1. BUANG kelas 'hidden' biar teks/tabelnya kelihatan saat mau print
+            areaCetak.classList.remove('hidden');
+            
+            // 2. Jalankan perintah print browser
+            window.print();
+            
+            // 3. SEMBUNYIKAN KEMBALI setelah dialog print selesai/ditutup
+            setTimeout(() => {
+                areaCetak.classList.add('hidden');
+                areaCetak.innerHTML = "";
+            }, 500);
         }
 
         function unduhTemplateExcel(tipe) {
