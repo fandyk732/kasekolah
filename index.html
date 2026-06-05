@@ -8,11 +8,24 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         /* Modifikasi Cetak Default Browser untuk Laporan Kolektif */
-        @media print {
-            body * { visibility: hidden; }
-            #areaCetak, #areaCetak * { visibility: visible; }
-            #areaCetak { position: absolute; left: 0; top: 0; width: 100%; }
-            .no-print { display: none; }
+       @media print {
+            /* Sembunyikan semua layout utama agar tidak menumpuk */
+            body > div.flex.min-h-screen {
+                display: none !important;
+            }
+            /* Paksa area cetak laporan muncul penuh di kertas */
+            #areaCetak {
+                display: block !important;
+                visibility: visible !important;
+                position: absolute !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+            }
+            #areaCetak * {
+                visibility: visible !important;
+            }
+            .no-print { display: none !important; }
         }
         
         /* FIX BUG STRUK KOSONG: CSS Printer Struk Tunggal Kasir */
