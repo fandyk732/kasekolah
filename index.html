@@ -8,36 +8,34 @@
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
         /* Modifikasi Cetak Default Browser untuk Laporan Kolektif */
-       @media print {
-            /* Sembunyikan semua layout utama agar tidak menumpuk */
-            body > div.flex.min-h-screen {
+        @media print {
+            body:not(.sedang-cetak-struk) #halamanDashboard {
                 display: none !important;
             }
-            /* Paksa area cetak laporan muncul penuh di kertas */
-            #areaCetak {
+            body:not(.sedang-cetak-struk) #areaCetak {
                 display: block !important;
                 visibility: visible !important;
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
             }
-            #areaCetak * {
+            body:not(.sedang-cetak-struk) #areaCetak * {
                 visibility: visible !important;
             }
             .no-print { display: none !important; }
         }
         
-        /* FIX BUG STRUK KOSONG: CSS Printer Struk Tunggal Kasir */
+        /* FIX BUG STRUK KOSONG: CSS Printer Struk Tunggal Kasir (Aman Tanpa Bentrok) */
         @media print {
             body.sedang-cetak-struk * {
                 visibility: hidden !important;
             }
-            body.sedang-cetak-struk #strukTunggalBox, 
-            body.sedang-cetak-struk #strukTunggalBox * {
+            body.sedang-cetak-struk #strukTunggalBoxUtama, 
+            body.sedang-cetak-struk #strukTunggalBoxUtama * {
                 visibility: visible !important;
             }
-            body.sedang-cetak-struk #strukTunggalBox {
+            body.sedang-cetak-struk #strukTunggalBoxUtama {
                 display: block !important;
                 position: absolute !important;
                 top: 0 !important;
@@ -53,7 +51,6 @@
 </head>
 <body class="bg-slate-100 text-slate-700 font-sans antialiased">
 
-    <!-- HALAMAN LOGIN -->
     <div id="halamanLogin" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 to-indigo-950 p-4">
         <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-slate-100">
             <div class="text-center mb-8">
@@ -77,10 +74,8 @@
         </div>
     </div>
 
-    <!-- HALAMAN UTAMA DASHBOARD -->
     <div id="halamanDashboard" class="hidden min-h-screen flex flex-col lg:flex-row relative">
         
-        <!-- TOPBAR MOBILE (Tombol Hide Sidebar di HP) -->
         <div class="p-4 bg-slate-900 text-white flex items-center justify-between lg:hidden shadow-md z-40">
             <div class="flex items-center gap-2">
                 <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
@@ -93,10 +88,8 @@
             </button>
         </div>
 
-        <!-- SIDEBAR NAVIGASI -->
         <aside id="sidebarAplikasi" class="w-64 bg-slate-900 text-slate-300 p-4 flex flex-col justify-between fixed inset-y-0 left-0 z-50 transform -translate-x-full lg:translate-x-0 lg:static transition-transform duration-300 ease-in-out">
             <div>
-                <!-- Header Sidebar -->
                 <div class="flex items-center gap-3 mb-8 px-2 mt-2 lg:mt-0">
                     <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-md">
                         <span class="text-white text-lg font-black">TU</span>
@@ -107,7 +100,6 @@
                     </div>
                 </div>
 
-                <!-- Menu Navigasi -->
                 <nav class="space-y-1">
                     <button onclick="pindahMenu('menuTransaksi')" id="btnNavTransaksi" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-xs tracking-wide uppercase transition duration-200 bg-indigo-600 text-white shadow-md cursor-pointer text-left">
                         📝 Transaksi Utama
@@ -121,7 +113,6 @@
                 </nav>
             </div>
 
-            <!-- Footer Sidebar Info Admin -->
             <div class="space-y-4">
                 <div class="lg:hidden">
                     <button type="button" onclick="toggleSidebarMobile()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-bold cursor-pointer">
@@ -141,12 +132,9 @@
             </div>
         </aside>
 
-        <!-- KONTEN UTAMA (KANAN) -->
         <main class="flex-1 p-4 lg:p-8 overflow-y-auto w-full">
             
-            <!-- ====== MENU 1: FORM TRANSAKSI ====== -->
             <div id="menuTransaksi" class="space-y-6">
-                <!-- Widget Ringkasan -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/60">
                         <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Pemasukan Hari Ini</div>
@@ -163,14 +151,12 @@
                 </div>
 
                 <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-                    <!-- Form Input -->
                     <div class="xl:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200/60 space-y-5">
                         <div>
                             <h3 class="text-base font-black text-slate-800">Menu Transaksi Utama</h3>
                             <p class="text-xs text-slate-400">Input data kas masuk dan keluar secara dinamis</p>
                         </div>
                         <form onsubmit="tambahDataKeCloud(event)" class="space-y-4">
-                            <!-- Alur Kas -->
                             <div>
                                 <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2">1. Pilih Alur Transaksi</label>
                                 <div class="grid grid-cols-2 gap-3">
@@ -188,14 +174,12 @@
                                 <input type="date" id="tanggal" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium" required>
                             </div>
 
-                            <!-- Autocomplete Variabel Kategori -->
                             <div class="relative">
                                 <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">2. Variabel / Kategori (Bisa Ketik Baru)</label>
                                 <input type="text" id="kategoriInput" oninput="filterKategoriAutocomplete(this.value)" onfocus="filterKategoriAutocomplete(this.value)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium" placeholder="Ketik kode/nama kategori..." autocomplete="off" required>
                                 <div id="boxHasilKategori" class="hidden absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-48 overflow-y-auto z-30 divide-y divide-slate-100"></div>
                             </div>
 
-                            <!-- Dinamis Nama -->
                             <div class="relative" id="containerNamaSiswa">
                                 <label id="labelDinamisNama" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">3. Nama Siswa / Jurusan (Ketik & Pilih)</label>
                                 <input type="text" id="cariSiswaInput" oninput="filterSiswaAutocomplete(this.value)" onfocus="filterSiswaAutocomplete(this.value)" class="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm font-medium" placeholder="Ketik nama siswa..." autocomplete="off">
@@ -218,7 +202,6 @@
                         </form>
                     </div>
 
-                    <!-- Live Activity Box -->
                     <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200/60 space-y-4">
                         <div>
                             <span class="px-2 py-0.5 bg-rose-50 text-rose-600 rounded-md text-[9px] font-bold uppercase tracking-wider float-right animate-pulse">Real-time</span>
@@ -236,7 +219,6 @@
                 </div>
             </div>
 
-            <!-- ====== MENU 2: MASTER VARIABEL & DATA ====== -->
             <div id="menuMaster" class="hidden space-y-6">
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/60 space-y-6">
                     <div>
@@ -262,7 +244,7 @@
                         <div class="p-3 bg-slate-50 rounded-xl border border-slate-200/60 flex flex-col justify-between gap-2">
                             <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wide">📈 Variabel Pemasukan</div>
                             <div class="flex gap-1.5">
-                                <button onclick="unduhTemplateExcel('kategori')" class="flex-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-bold py-1.5 px-2 rounded-lg cursor-pointer">📥 Template</button>
+                                <button onclick="unduhTemplateExcel('kategori')" class="flex-1 bg-white hover:bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-bold py-1.5 px-2 rounded-lg cursor-lg cursor-pointer">📥 Template</button>
                                 <label class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white text-[10px] font-bold py-1.5 px-2 rounded-lg text-center cursor-pointer">
                                     📤 Upload <input type="file" accept=".xlsx, .xls" class="hidden" onchange="importExcelKolektif(event, 'Pemasukan')">
                                 </label>
@@ -281,7 +263,6 @@
                     </div>
 
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
-                        <!-- Tabel Siswa -->
                         <div class="border border-slate-200/70 rounded-xl overflow-hidden shadow-sm bg-white">
                             <div class="p-3 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-700 uppercase tracking-wide">Daftar Master Siswa Cloud</div>
                             <div class="overflow-y-auto max-h-96">
@@ -300,7 +281,6 @@
                             </div>
                         </div>
 
-                        <!-- Tabel Kategori -->
                         <div class="border border-slate-200/70 rounded-xl overflow-hidden shadow-sm bg-white">
                             <div class="p-3 bg-slate-50 border-b border-slate-200 font-bold text-xs text-slate-700 uppercase tracking-wide">Daftar Variabel Autocomplete</div>
                             <div class="overflow-y-auto max-h-96">
@@ -322,7 +302,6 @@
                 </div>
             </div>
 
-            <!-- ====== MENU 3: LAPORAN BUKU KAS UTAMA ====== -->
             <div id="menuLaporan" class="hidden space-y-6">
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200/60 space-y-5">
                     <div>
@@ -330,7 +309,6 @@
                         <p class="text-xs text-slate-400">Filter data kas secara fleksibel, ekspor ke Excel, atau cetak laporan kolektif</p>
                     </div>
 
-                    <!-- Filter Panel -->
                     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200/50">
                         <div>
                             <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Mulai Tanggal</label>
@@ -356,19 +334,16 @@
                         </div>
                     </div>
 
-                    <!-- Search Box -->
                     <div class="w-full">
                         <input type="text" id="cariKataKunci" oninput="filterDataSemua()" class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="🔍 Cari data berdasarkan nama siswa, penerima dana, atau uraian keterangan...">
                     </div>
 
-                    <!-- Ringkasan Laporan -->
                     <div class="grid grid-cols-3 gap-2 text-center text-xs font-bold border-y border-slate-200 py-3 bg-slate-50/50 rounded-xl">
                         <div class="border-r border-slate-200"><div class="text-[9px] text-slate-400 uppercase tracking-wider">Total Masuk</div><div id="lapTotalMasuk" class="text-emerald-600 font-black mt-0.5">Rp 0</div></div>
                         <div class="border-r border-slate-200"><div class="text-[9px] text-slate-400 uppercase tracking-wider">Total Keluar</div><div id="lapTotalKeluar" class="text-rose-600 font-black mt-0.5">Rp 0</div></div>
                         <div><div class="text-[9px] text-slate-400 uppercase tracking-wider">Selisih Kas</div><div id="lapSelisih" class="text-indigo-600 font-black mt-0.5">Rp 0</div></div>
                     </div>
 
-                    <!-- TABEL LAPORAN (KOLOM TERPISAH) -->
                     <div class="border border-slate-200/70 rounded-xl overflow-hidden shadow-sm bg-white">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left text-xs" id="tabelLaporanUtama">
@@ -390,28 +365,6 @@
                         </div>
                     </div>
 
-                    <!-- ELEMEN STRUK TUNGGAL (FIXED VIEW & PRINT SECURITY) -->
-                    <div class="border border-slate-100 p-2 rounded-xl bg-slate-50/50">
-                        <div id="strukTunggalBox" class="hidden max-w-sm mx-auto bg-white border-2 border-dashed border-slate-300 p-6 rounded-lg font-mono text-xs text-slate-800 shadow-sm my-4">
-                            <div class="text-center space-y-1 mb-4 border-b border-slate-200 pb-3">
-                                <h4 class="font-bold text-sm tracking-tight">SMK AL KAAFFAH</h4>
-                                <p class="text-[10px] text-slate-400">Kepanjen, Malang, Jawa Timur</p>
-                                <p class="text-[10px] text-slate-500 font-bold uppercase mt-1">BUKTI KAS INTERNAL (CLOUD)</p>
-                            </div>
-                            <table class="w-full space-y-1.5">
-                                <tr><td class="text-slate-400">No. Transaksi:</td><td id="s_id" class="text-right font-bold"></td></tr>
-                                <tr><td class="text-slate-400">Tanggal:</td><td id="s_tgl" class="text-right"></td></tr>
-                                <tr><td class="text-slate-400">Jenis Kas:</td><td id="s_jenis" class="text-right font-bold"></td></tr>
-                                <tr><td class="text-slate-400">Kategori/Kode:</td><td id="s_kat" class="text-right font-bold text-indigo-600"></td></tr>
-                                <tr><td class="text-slate-400">Pihak Terkait:</td><td id="s_nama" class="text-right font-bold"></td></tr>
-                                <tr><td class="text-slate-400">Uraian:</td><td id="s_ket" class="text-right italic text-slate-600"></td></tr>
-                                <tr class="border-t border-slate-200"><td class="pt-2 font-bold text-sm">TOTAL JUMLAH:</td><td id="s_total" class="pt-2 text-right font-black text-sm text-slate-900"></td></tr>
-                            </table>
-                            <div class="text-center mt-6 border-t border-dashed border-slate-200 pt-3 text-[9px] text-slate-400 italic">Data tersimpan aman di Cloud Sistem.</div>
-                        </div>
-                    </div>
-
-                    <!-- Tombol Aksi -->
                     <div class="flex flex-wrap gap-2 pt-2 justify-end">
                         <button onclick="eksporDataKeExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs tracking-wide transition shadow-md shadow-emerald-100 cursor-pointer">📊 Export Filtered Excel</button>
                         <button onclick="cetakLaporanKolektif()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-4 rounded-xl text-xs tracking-wide transition shadow-md shadow-amber-100 cursor-pointer">🖨️ Print Laporan Sesuai Filter</button>
@@ -422,10 +375,26 @@
         </main>
     </div>
 
-    <!-- AREA CETAK LAPORAN KOLEKTIF -->
+    <div id="strukTunggalBoxUtama" class="hidden max-w-sm mx-auto bg-white border-2 border-dashed border-slate-400 p-6 rounded-lg font-mono text-xs text-black shadow-sm my-4">
+        <div class="text-center space-y-1 mb-4 border-b border-slate-200 pb-3">
+            <h4 class="font-bold text-sm tracking-tight">SMK AL KAAFFAH</h4>
+            <p class="text-[10px] text-slate-500">Kepanjen, Malang, Jawa Timur</p>
+            <p class="text-[10px] font-bold uppercase mt-1">BUKTI KAS INTERNAL (CLOUD)</p>
+        </div>
+        <table class="w-full space-y-1.5">
+            <tr><td>No. Transaksi:</td><td id="s_id" class="text-right font-bold"></td></tr>
+            <tr><td>Tanggal:</td><td id="s_tgl" class="text-right"></td></tr>
+            <tr><td>Jenis Kas:</td><td id="s_jenis" class="text-right font-bold"></td></tr>
+            <tr><td>Kategori/Kode:</td><td id="s_kat" class="text-right font-bold"></td></tr>
+            <tr><td>Pihak Terkait:</td><td id="s_nama" class="text-right font-bold"></td></tr>
+            <tr><td>Uraian:</td><td id="s_ket" class="text-right italic"></td></tr>
+            <tr class="border-t border-slate-300"><td class="pt-2 font-bold text-sm">TOTAL JUMLAH:</td><td id="s_total" class="pt-2 text-right font-black text-sm"></td></tr>
+        </table>
+        <div class="text-center mt-6 border-t border-dashed border-slate-300 pt-3 text-[9px] text-slate-500 italic">Data tersimpan aman di Cloud Sistem.</div>
+    </div>
+
     <div id="areaCetak" class="hidden font-sans p-6 text-slate-800"></div>
 
-    <!-- MODAL POPUP TAMBAH SISWA MANUAL -->
     <div id="modalSiswa" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
         <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-md border border-slate-100">
             <div class="flex justify-between items-center mb-4">
@@ -446,12 +415,10 @@
         </div>
     </div>
 
-    <!-- FIREBASE SYSTEM INTEGRATION -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, getDocs, deleteDoc, doc, writeBatch, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // ⚠️ TARUH FIREBASE API CONFIG LO DI SINI BRO!
         const firebaseConfig = {
             apiKey: "AIzaSyA123456789-ContohKeySaja",
             authDomain: "kasir-tu.firebaseapp.com",
@@ -474,7 +441,6 @@
 
         document.getElementById('tanggal').valueAsDate = new Date();
 
-        // 1. Snapshot Master Siswa
         onSnapshot(koleksiMasterSiswa, (snapshot) => {
             window.siswaCloudCache = [];
             let html = "";
@@ -495,7 +461,6 @@
             document.getElementById('crudBodySiswa').innerHTML = html || `<tr><td colspan="3" class="p-4 text-center text-slate-400 italic">Tidak ada master siswa.</td></tr>`;
         });
 
-        // 2. Snapshot Master Kategori
         onSnapshot(koleksiKategoriAutosave, (snapshot) => {
             window.kategoriCloudCache = [];
             let html = "";
@@ -633,7 +598,7 @@
             document.getElementById('widgetMiniSaldo').innerText = `Rp ${totalKas.toLocaleString('id-ID')}`;
         };
 
-        // FIX LOGIC PRINT STRUK
+        // INTEGRASI PRINT STRUK TUNGGAL FIXED 
         window.cetakStrukLangsungDariLive = function(idDocument) {
             const data = window.dataMasterCloud.find(d => d.id === idDocument);
             if(!data) return;
@@ -647,7 +612,7 @@
             document.getElementById('s_total').innerText = `Rp ${data.jumlah.toLocaleString('id-ID')}`;
             
             // Tampilkan wadah box struknya sebelum print
-            const boxStruk = document.getElementById('strukTunggalBox');
+            const boxStruk = document.getElementById('strukTunggalBoxUtama');
             boxStruk.classList.remove('hidden');
             
             document.body.classList.add('sedang-cetak-struk');
@@ -670,7 +635,6 @@
         };
     </script>
 
-    <!-- INTERFACE ENGINE LOGIC -->
     <script>
         function prosesLogin(e){
             e.preventDefault();
@@ -684,7 +648,6 @@
             document.getElementById('halamanLogin').classList.remove('hidden');
         }
 
-        // TOGGLE SIDEBAR MOBILE HANDLER
         function toggleSidebarMobile() {
             document.getElementById('sidebarAplikasi').classList.toggle('-translate-x-full');
         }
@@ -731,7 +694,6 @@
             input.value = value ? parseFloat(value).toLocaleString('en-US') : '';
         }
 
-        // Autocomplete
         function filterKategoriAutocomplete(val) {
             const jenis = document.querySelector('input[name="jenis_kas"]:checked').value;
             let cocok = window.kategoriCloudCache.filter(k => k.namaKategori.toLowerCase().includes(val.toLowerCase()) && k.jenisKas === jenis);
@@ -758,7 +720,6 @@
             document.getElementById('boxHasilSiswa').classList.add('hidden');
         };
 
-        // ENGINE FILTER LAPORAN UTAMA
         window.filterDataSemua = function() {
             const tglMulai = document.getElementById('filterTglMulai').value;
             const tglSelesai = document.getElementById('filterTglSelesai').value;
@@ -830,54 +791,84 @@
 
         function cetakLaporanKolektif() {
             if(window.dataFilteredLokal.length === 0) return;
+            
+            // Variabel penampung hitungan total
+            let totalMasuk = 0;
+            let totalKeluar = 0;
+
             let htmlPrint = `
                 <div style="text-align:center; margin-bottom:20px;">
-                    <h2 style="font-size:16px; margin:0;">LAPORAN BUKU KAS TATA USAHA</h2>
-                    <p style="font-size:11px; color:#555;">Kepanjen, Malang, Jawa Timur</p>
+                    <h2 style="font-size:16px; margin:0; uppercase">LAPORAN BUKU KAS TATA USAHA</h2>
+                    <p style="font-size:11px; color:#555; margin:4px 0 0 0;">Kepanjen, Malang, Jawa Timur</p>
+                    <p style="font-size:10px; color:#666; margin:2px 0 0 0; font-style:italic;">Dicetak otomatis berdasarkan filter sistem</p>
                 </div>
                 <table style="width:100%; border-collapse:collapse; font-size:11px;">
                     <thead>
                         <tr style="background:#f1f5f9;">
-                            <th style="padding:6px; border:1px solid #cbd5e1;">No</th>
-                            <th style="padding:6px; border:1px solid #cbd5e1;">Tanggal</th>
-                            <th style="padding:6px; border:1px solid #cbd5e1;">Kategori</th>
-                            <th style="padding:6px; border:1px solid #cbd5e1;">Nama & Uraian</th>
-                            <th style="padding:6px; border:1px solid #cbd5e1; text-align:right;">Pemasukan (Debit)</th>
-                            <th style="padding:6px; border:1px solid #cbd5e1; text-align:right;">Pengeluaran (Kredit)</th>
+                            <th style="padding:6px; border:1px solid #cbd5e1; text-align:center; width:30px;">No</th>
+                            <th style="padding:6px; border:1px solid #cbd5e1; text-align:left; width:80px;">Tanggal</th>
+                            <th style="padding:6px; border:1px solid #cbd5e1; text-align:left; width:100px;">Kategori</th>
+                            <th style="padding:6px; border:1px solid #cbd5e1; text-align:left;">Nama & Uraian</th>
+                            <th style="padding:6px; border:1px solid #cbd5e1; text-align:right; width:110px;">Pemasukan (Debit)</th>
+                            <th style="padding:6px; border:1px solid #cbd5e1; text-align:right; width:110px;">Pengeluaran (Kredit)</th>
                         </tr>
                     </thead>
                     <tbody>
             `;
+
             window.dataFilteredLokal.forEach((d, i) => {
+                // Sambil looping data tabel, kita akumulasikan nilainya ke variabel total
+                if(d.jenisKas === 'Pemasukan') {
+                    totalMasuk += d.jumlah;
+                } else {
+                    totalKeluar += d.jumlah;
+                }
+
                 htmlPrint += `
                     <tr>
                         <td style="padding:6px; border:1px solid #cbd5e1; text-align:center;">${i+1}</td>
-                        <td style="padding:6px; border:1px solid #cbd5e1;">${d.tanggal}</td>
-                        <td style="padding:6px; border:1px solid #cbd5e1;">${d.kategori}</td>
-                        <td style="padding:6px; border:1px solid #cbd5e1;"><b>${d.nama.toUpperCase()}</b><br>${d.keterangan || '-'}</td>
-                        <td style="padding:6px; border:1px solid #cbd5e1; text-align:right;">${d.jenisKas==='Pemasukan'?'Rp '+d.jumlah.toLocaleString('id-ID'):'-'}</td>
-                        <td style="padding:6px; border:1px solid #cbd5e1; text-align:right;">${d.jenisKas==='Pengeluaran'?'Rp '+d.jumlah.toLocaleString('id-ID'):'-'}</td>
+                        <td style="padding:6px; border:1px solid #cbd5e1; white-space:nowrap;">${d.tanggal}</td>
+                        <td style="padding:6px; border:1px solid #cbd5e1;"><span style="background:#f8fafc; padding:2px 4px; border-radius:3px; border:1px solid #e2e8f0;">${d.kategori}</span></td>
+                        <td style="padding:6px; border:1px solid #cbd5e1;"><b>${d.nama.toUpperCase()}</b><br><span style="color:#64748b; font-size:10px;">${d.keterangan || '-'}</span></td>
+                        <td style="padding:6px; border:1px solid #cbd5e1; text-align:right; font-weight:600;">${d.jenisKas==='Pemasukan'?'Rp '+d.jumlah.toLocaleString('id-ID'):'-'}</td>
+                        <td style="padding:6px; border:1px solid #cbd5e1; text-align:right; font-weight:600;">${d.jenisKas==='Pengeluaran'?'Rp '+d.jumlah.toLocaleString('id-ID'):'-'}</td>
                     </tr>
                 `;
             });
-            htmlPrint += `</tbody></table>`;
+
+            // Hitung selisih kas (Pemasukan - Pengeluaran)
+            let selisihKas = totalMasuk - totalKeluar;
+
+            // Tambahkan baris total perhitungan di bagian bawah (Footer Tabel)
+            htmlPrint += `
+                    <tr style="background:#f8fafc; font-weight:bold;">
+                        <td colspan="4" style="padding:8px; border:1px solid #cbd5e1; text-align:right; uppercase">Total Kumulatif:</td>
+                        <td style="padding:8px; border:1px solid #cbd5e1; text-align:right; color:#16a34a;">Rp ${totalMasuk.toLocaleString('id-ID')}</td>
+                        <td style="padding:8px; border:1px solid #cbd5e1; text-align:right; color:#dc2626;">Rp ${totalKeluar.toLocaleString('id-ID')}</td>
+                    </tr>
+                    <tr style="background:#f1f5f9; font-weight:black; font-size:12px;">
+                        <td colspan="4" style="padding:8px; border:1px solid #cbd5e1; text-align:right; font-weight:bold;">Sisa Saldo Buku Kas (Pemasukan - Pengeluaran):</td>
+                        <td colspan="2" style="padding:8px; border:1px solid #cbd5e1; text-align:right; font-weight:bold; color:#2563eb;">
+                            Rp ${selisihKas.toLocaleString('id-ID')}
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            `;
             
+            // Tembakkan html ke penampung cetak lalu jalankan perintah printer
             const areaCetak = document.getElementById('areaCetak');
             areaCetak.innerHTML = htmlPrint;
-            
-            // 1. BUANG kelas 'hidden' biar teks/tabelnya kelihatan saat mau print
             areaCetak.classList.remove('hidden');
             
-            // 2. Jalankan perintah print browser
             window.print();
             
-            // 3. SEMBUNYIKAN KEMBALI setelah dialog print selesai/ditutup
+            // Sembunyikan lagi penampungnya biar dashboard utama bersih kembali
             setTimeout(() => {
                 areaCetak.classList.add('hidden');
                 areaCetak.innerHTML = "";
-            }, 500);
+            }, 600);
         }
-
         function unduhTemplateExcel(tipe) {
             let data = tipe === 'siswa' ? [{"Nama Siswa": "SATRIA MAULANA", "Kelas": "X TKR"}] : [{"Nama Kategori": "SPP MEI 2026"}];
             const ws = XLSX.utils.json_to_sheet(data); const wb = XLSX.utils.book_new();
